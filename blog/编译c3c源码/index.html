@@ -1,0 +1,227 @@
+<!DOCTYPE html><html lang="zh"> <head><script>
+      (function(){
+        // theme
+        var d = document.documentElement;
+        var t = localStorage.getItem('theme') || 'dark';
+        if (t === 'dark') d.classList.add('dark');
+        else d.classList.remove('dark');
+        // language
+        var lang = localStorage.getItem('lang') || 'zh';
+        d.lang = lang;
+        // i18n swap - run before body renders to avoid flash
+        if (lang !== 'zh') {
+          var en={"nav":{"archive":"Archive","tags":"Tags","about":"About","links":"Links","search":"Search articles...","menu":"Menu"},"pagination":{"prev":"Previous","next":"Next"},"post":{"publishedOn":"Published on","updatedOn":"Updated on","words":"words","prevPost":"Previous post","nextPost":"Next post","toc":"Table of Contents"},"footer":{"running":"Blog running for"},"scroll":{"top":"Back to top","bottom":"Scroll to bottom","toc":"Table of Contents","back":"Go back"},"theme":{"toggle":"Toggle theme"},"notFound":{"title":"Page Not Found","message":"Sorry, this page does not exist.","back":"Back to Home"},"about":{"title":"About"},"links":{"title":"Links"},"tags":{"title":"Tags","articles":"articles"},"blog":{"archive":"Archive","page":"Page","page2":""},"searchModal":{"noResults":"No results"},"lang":{"label":"Language"}};
+          window.__i18n_en = en;
+        }
+      })();
+    </script><meta charset="utf-8"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" href="/favicon.ico"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="Astro v6.4.3"><title>编译C3C源码 | ccnuu blog</title><meta name="description" content="关于 c3c 从源码构建遇到的一些坑和解决方案"><!-- Open Graph --><meta property="og:title" content="编译C3C源码 | ccnuu blog"><meta property="og:description" content="关于 c3c 从源码构建遇到的一些坑和解决方案"><meta property="og:image" content="https://raw.githubusercontent.com/ccnuu/img/refs/heads/main/c3c/c3c.svg"><meta property="og:url" content="https://ccnuu.github.io/blog/%E7%BC%96%E8%AF%91c3c%E6%BA%90%E7%A0%81/"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><!-- Canonical --><link rel="canonical" href="https://ccnuu.github.io/blog/%E7%BC%96%E8%AF%91c3c%E6%BA%90%E7%A0%81/"><!-- RSS --><link rel="alternate" type="application/rss+xml" title="ccnuu blog" href="/rss.xml"><style>article pre{position:relative}article pre .copy-btn{position:absolute;top:.5rem;right:.5rem;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:.25rem;border:1px solid #334155;background:#1e293b;color:#94a3b8;cursor:pointer;opacity:0;transition:opacity .15s;z-index:10}article pre:hover .copy-btn{opacity:1}article pre .copy-btn:hover{color:#e2e8f0;border-color:#475569}article pre .copy-btn.copied{color:#4ade80;border-color:#4ade80}
+</style>
+<link rel="stylesheet" href="/_astro/BaseLayout.Wx7pbUKt.css"></head> <body class="flex h-dvh flex-col overflow-hidden text-text antialiased dark:text-text-dark"> <header class="z-50 shrink-0 glass-strong"> <nav class="mx-auto flex max-w-3xl items-center px-6 py-3"> <!-- 仅手机端：头像 + 昵称 --> <a href="/" class="flex items-center gap-2.5 text-lg font-bold text-text hover:text-primary dark:text-text-dark md:hidden"> <img src="/favicon.svg" alt="logo" class="h-8 w-8 rounded-full"> <span>ccnuu</span> </a> <!-- 桌面端导航：左 链接 / 右 功能按钮 --> <div class="hidden w-full items-center md:flex"> <div class="flex items-center gap-6"> <a href="/blog" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.archive">归档</a> <a href="/tags" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.tags">标签</a> <a href="/about" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.about">关于</a> <a href="/links" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.links">友链</a> </div> <div class="ml-auto flex items-center gap-3"> <a href="/rss.xml" target="_blank" class="rounded p-1.5 text-muted hover:text-[#f97316] dark:text-muted-dark dark:hover:text-[#fb923c]" title="RSS" aria-label="RSS"> <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"> <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93v-2.83z"></path> </svg> </a> <button type="button" class="search-toggle-btn text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="搜索"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <circle cx="11" cy="11" r="8"></circle> <path d="M21 21l-4.35-4.35"></path> </svg> </button> <script type="module">document.querySelectorAll(".search-toggle-btn").forEach(e=>{e.addEventListener("click",()=>{document.getElementById("search-modal").classList.remove("hidden"),setTimeout(()=>{document.getElementById("search-input")?.focus()},100)})});</script> <button type="button" class="theme-toggle-btn rounded p-1.5 text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="切换主题" data-i18n-aria="theme.toggle"> <span class="block h-5 w-5 dark:hidden"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"></path> </svg> </span> <span class="hidden h-5 w-5 dark:block"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"></path> </svg> </span> </button> <button id="lang-switch" type="button" class="text-xs font-medium text-muted hover:text-primary dark:text-muted-dark dark:hover:text-blue-400" title="Language">EN</button> </div> </div> <!-- 手机端：头像 + 功能按钮 --> <div class="ml-auto flex items-center gap-3 md:hidden"> <a href="/rss.xml" target="_blank" class="rounded p-1.5 text-muted hover:text-[#f97316] dark:text-muted-dark dark:hover:text-[#fb923c]" title="RSS" aria-label="RSS"> <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"> <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93v-2.83z"></path> </svg> </a> <button type="button" class="search-toggle-btn text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="搜索"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <circle cx="11" cy="11" r="8"></circle> <path d="M21 21l-4.35-4.35"></path> </svg> </button>  <button type="button" class="theme-toggle-btn rounded p-1.5 text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="切换主题" data-i18n-aria="theme.toggle"> <span class="block h-5 w-5 dark:hidden"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"></path> </svg> </span> <span class="hidden h-5 w-5 dark:block"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"></path> </svg> </span> </button> <button id="lang-switch-m" type="button" class="text-xs font-medium text-muted hover:text-primary dark:text-muted-dark dark:hover:text-blue-400" title="Language">EN</button> <button id="mobile-menu-btn" type="button" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="菜单" data-i18n-aria="nav.menu" onclick="var m=document.getElementById('mobile-menu');m.style.display=m.style.display==='none'?'block':'none';event.stopPropagation();"> <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M4 6h16M4 12h16M4 18h16"></path> </svg> </button> </div> </nav> <!-- 手机端覆盖菜单 --> <div id="mobile-menu" class="fixed inset-x-0 top-[53px] z-40 glass-strong px-6 pb-6 pt-4 shadow-lg md:hidden" style="display:none" onclick="event.stopPropagation()"> <div class="flex flex-col items-center gap-4 text-base"> <a href="/blog" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.archive">归档</a> <a href="/tags" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.tags">标签</a> <a href="/about" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.about">关于</a> <a href="/links" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.links">友链</a> </div> </div> </header> <script>
+  var mobileMenu = document.getElementById('mobile-menu');
+  document.addEventListener('click', function () {
+    if (mobileMenu && mobileMenu.style.display !== 'none') {
+      mobileMenu.style.display = 'none';
+    }
+  });
+  var mq = window.matchMedia('(min-width: 768px)');
+  mq.addEventListener('change', function () {
+    if (mq.matches && mobileMenu && mobileMenu.style.display !== 'none') {
+      mobileMenu.style.display = 'none';
+    }
+  });
+
+  // Language switcher
+  (function(){
+    var lang = localStorage.getItem('lang') || 'zh';
+    var btns = [document.getElementById('lang-switch'), document.getElementById('lang-switch-m')];
+    btns.forEach(function(btn){
+      if (!btn) return;
+      btn.textContent = lang === 'zh' ? 'EN' : '中文';
+      btn.addEventListener('click', function(){
+        var next = lang === 'zh' ? 'en' : 'zh';
+        localStorage.setItem('lang', next);
+        location.reload();
+      });
+    });
+  })();
+</script> <div class="flex-1 overflow-y-auto"> <div class="relative mx-auto max-w-3xl px-4 py-8"> <main class="glass-card p-6 sm:p-8">  <article class="prose max-w-none"> <header class="mb-8"> <h1 class="mb-4 text-3xl font-bold text-text dark:text-text-dark"> 编译C3C源码 </h1> <div class="flex flex-wrap items-center gap-4 text-sm text-muted dark:text-muted-dark"> <time datetime="2025-03-20T00:00:00.000Z"> <span data-i18n="post.publishedOn">发布于</span> 2025年3月20日 </time>  <span>· 4415 <span data-i18n="post.words">字</span></span> </div> <div class="mt-4 flex flex-wrap gap-2"> <a href="/tags/C3C" class="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-muted transition-colors hover:bg-primary hover:text-white dark:bg-gray-800 dark:text-muted-dark dark:hover:bg-primary">
+# C3C </a><a href="/tags/C3" class="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-muted transition-colors hover:bg-primary hover:text-white dark:bg-gray-800 dark:text-muted-dark dark:hover:bg-primary">
+# C3 </a> </div> </header>  <h2 id="前言">前言</h2>
+<p>关于 c3c 从源码构建, 遇到的一些坑: 当前 (<code>2025-03-21</code>) 根据 c3c 文档中介绍的从源码构建, 简单的几行命令就可以 build 出来编译器了, 但我在实际的操作中, 一直卡在 <code>Loading Windows LLVM libraries, this may take a while...</code>, 重试几次无果, 于是乎翻构建脚本看看</p>
+<h2 id="准备">准备</h2>
+<p>目标平台是 <code>windows</code>, 其他平台不在此笔记中记载</p>
+<blockquote>
+<p>因为我主力机是 <code>windows</code>, 所以 <code>Unix</code> 系列没去 build, 听群友说是无痛编译</p>
+</blockquote>
+<p>开始之前列举一下相关文档:</p>
+<ul>
+<li><a href="https://c3-lang.org/getting-started/">c3官方文档</a>, 安装, 使用的详情都在这了</li>
+<li><a href="https://github.com/c3lang/win-llvm/releases/tag/llvm_19_1_5">c3文档指向的 llvm 版本</a>, 我是直接到 <a href="https://github.com/llvm/llvm-project/releases">llvm仓库自己安装的</a></li>
+<li><a href="git@github.com:c3lang/c3c.git">c3源码</a>, <code>git clone git@github.com:c3lang/c3c.git</code></li>
+</ul>
+<p>build前需要准备的环境如下:</p>
+<ul>
+<li>msvc, <strong>「visual studio installer」</strong> 中勾选上 <strong>「使用 C++ 的桌面开发」</strong> 安装即可 (这里如果不适用 msvc, 改用 mingw 应该也可以, 但是我没有实践)</li>
+<li>cmake</li>
+</ul>
+<h2 id="构建">构建</h2>
+<blockquote>
+<p>直接跳到 <a href="./%E7%BC%96%E8%AF%91C3C%E6%BA%90%E7%A0%81.md/#%E8%A1%A5%E5%85%85">补充</a> 段落修改编译脚本(简单省事), 然后再根据下面的命令执行步骤跑一遍就可以了</p>
+</blockquote>
+<ul>
+<li>git clone <a href="mailto:git@github.com">git@github.com</a>:c3lang/c3c.git</li>
+<li>cd c3c</li>
+<li>修改 <code>CMakeLists.txt</code>
+<ul>
+<li>line: 121 ~ 152
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="cmake"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#768390"># if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     if (C3_LLVM_VERSION STREQUAL "auto")</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#         set(C3_LLVM_VERSION "19")</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     endif()</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     FetchContent_Declare(</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#             LLVM_Windows</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#             URL https://github.com/c3lang/win-llvm/releases/download/llvm_19_1_5/llvm-19.1.5-windows-amd64-msvc17-libcmt.7z</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     )</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     FetchContent_Declare(</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#             LLVM_Windows_debug</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#             URL https://github.com/c3lang/win-llvm/releases/download/llvm_19_1_5/llvm-19.1.5-windows-amd64-msvc17-libcmt-dbg.7z</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     )</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     if(CMAKE_BUILD_TYPE STREQUAL "Debug")</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#         message("Loading Windows LLVM debug libraries, this may take a while...")</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#         FetchContent_MakeAvailable(LLVM_Windows_debug)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#         set(llvm_dir ${llvm_windows_debug_SOURCE_DIR})</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     else()</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#         message("Loading Windows LLVM libraries, this may take a while...")</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#         FetchContent_MakeAvailable(LLVM_Windows)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#         set(llvm_dir ${llvm_windows_SOURCE_DIR})</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     endif()</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     set(CMAKE_SYSTEM_PREFIX_PATH ${llvm_dir} ${CMAKE_SYSTEM_PREFIX_PATH})</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     find_package(LLVM REQUIRED CONFIG)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     find_package(LLD REQUIRED CONFIG)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390"># else()</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     if (NOT C3_LLVM_VERSION STREQUAL "auto")</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#         find_package(LLVM ${C3_LLVM_VERSION} REQUIRED CONFIG)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     else()</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#         find_package(LLVM REQUIRED CONFIG)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">#     endif()</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390"># endif()</span></span></code></pre>
+</li>
+<li>上面部分 cmake 脚本是默认 msvc 环境下就会去远端拉取 llvm 环境, 注释掉或者直接删除, 替换成下面的脚本. 其中 <code>LLVM_DIR</code> 设置成自己 llvm 实际的安装路径即可
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="cmake"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">if</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(CMAKE_C_COMPILER_ID </span><span style="color:#D73A49;--shiki-dark:#F47067">STREQUAL</span><span style="color:#032F62;--shiki-dark:#96D0FF"> "MSVC"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    if</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> (C3_LLVM_VERSION </span><span style="color:#D73A49;--shiki-dark:#F47067">STREQUAL</span><span style="color:#032F62;--shiki-dark:#96D0FF"> "auto"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">        set</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(C3_LLVM_VERSION </span><span style="color:#032F62;--shiki-dark:#96D0FF">"19.1.5"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    endif</span><span style="color:#24292E;--shiki-dark:#ADBAC7">()</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">    # 手动设置本地 LLVM</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    set</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(LLVM_DIR </span><span style="color:#032F62;--shiki-dark:#96D0FF">"D:/LLVM"</span><span style="color:#D73A49;--shiki-dark:#F47067"> CACHE</span><span style="color:#D73A49;--shiki-dark:#F47067"> PATH</span><span style="color:#032F62;--shiki-dark:#96D0FF"> "Path to LLVM cmake directory"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    find_package</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(LLVM </span><span style="color:#D73A49;--shiki-dark:#F47067">${C3_LLVM_VERSION}</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> REQUIRED CONFIG)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    find_package</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(LLD REQUIRED CONFIG)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">else</span><span style="color:#24292E;--shiki-dark:#ADBAC7">()</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    if</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> (</span><span style="color:#D73A49;--shiki-dark:#F47067">NOT</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> C3_LLVM_VERSION </span><span style="color:#D73A49;--shiki-dark:#F47067">STREQUAL</span><span style="color:#032F62;--shiki-dark:#96D0FF"> "auto"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">        find_package</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(LLVM </span><span style="color:#D73A49;--shiki-dark:#F47067">${C3_LLVM_VERSION}</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> REQUIRED CONFIG)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    else</span><span style="color:#24292E;--shiki-dark:#ADBAC7">()</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">        find_package</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(LLVM REQUIRED CONFIG)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    endif</span><span style="color:#24292E;--shiki-dark:#ADBAC7">()</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">endif</span><span style="color:#24292E;--shiki-dark:#ADBAC7">()</span></span></code></pre>
+</li>
+</ul>
+</li>
+<li>mkdir build</li>
+<li>cd build</li>
+<li>cmake ..</li>
+<li>cmake —build .</li>
+</ul>
+<p>构建完毕, <code>build</code> 目录下生成 <code>c3c.exe</code></p>
+<h3 id="补充">补充</h3>
+<p>莫名奇妙的, 第二天到公司电脑编源码, 还是一样的配置 环境, 硬是不行 (找不到问题, 后面把 <code>CMakeLists.txt</code> 一通乱改测试编译), 后面发现没必要改这么一大段, 简单替换一下 fetch 部分就好了:</p>
+<blockquote>
+<p>我就只下载了一个 debug 的 llvm, 所以替换成一样的了</p>
+</blockquote>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="cmake"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">if</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#E36209;--shiki-dark:#F69D50">CMAKE_BUILD_TYPE</span><span style="color:#D73A49;--shiki-dark:#F47067"> STREQUAL</span><span style="color:#032F62;--shiki-dark:#96D0FF"> "Debug"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    message</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#032F62;--shiki-dark:#96D0FF">"Loading Windows LLVM debug libraries, this may take a while..."</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">    # FetchContent_MakeAvailable(LLVM_Windows_debug)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    set</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(llvm_dir </span><span style="color:#032F62;--shiki-dark:#96D0FF">"D:/llvm-19.1.5-windows-amd64-msvc17-libcmt-dbg"</span><span style="color:#D73A49;--shiki-dark:#F47067"> CACHE</span><span style="color:#D73A49;--shiki-dark:#F47067"> PATH</span><span style="color:#032F62;--shiki-dark:#96D0FF"> "Path to LLVM cmake directory"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    set</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(llvm_dir </span><span style="color:#D73A49;--shiki-dark:#F47067">${llvm_windows_debug_SOURCE_DIR}</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">else</span><span style="color:#24292E;--shiki-dark:#ADBAC7">()</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    message</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#032F62;--shiki-dark:#96D0FF">"Loading Windows LLVM libraries, this may take a while..."</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">    # FetchContent_MakeAvailable(LLVM_Windows)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    set</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(llvm_dir </span><span style="color:#032F62;--shiki-dark:#96D0FF">"D:/llvm-19.1.5-windows-amd64-msvc17-libcmt-dbg"</span><span style="color:#D73A49;--shiki-dark:#F47067"> CACHE</span><span style="color:#D73A49;--shiki-dark:#F47067"> PATH</span><span style="color:#032F62;--shiki-dark:#96D0FF"> "Path to LLVM cmake directory"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">    set</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(llvm_dir </span><span style="color:#D73A49;--shiki-dark:#F47067">${llvm_windows_SOURCE_DIR}</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">endif</span><span style="color:#24292E;--shiki-dark:#ADBAC7">()</span></span></code></pre>
+<h2 id="测试">测试</h2>
+<p>还是在 <code>build</code> 目录中</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="shell"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">c3c</span><span style="color:#032F62;--shiki-dark:#96D0FF"> compile-run</span><span style="color:#032F62;--shiki-dark:#96D0FF">  ../resources/testfragments/helloworld.c3</span></span></code></pre>
+<p>打印输出如下, 即 <code>c3c</code> 环境搭建完成</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="txt"><code><span class="line"><span>E:\Code\c3c\build>c3c compile-run  ../resources/testfragments/helloworld.c3</span></span>
+<span class="line"><span>Launching helloworld.exe</span></span>
+<span class="line"><span>Hello, World!</span></span>
+<span class="line"><span>Program completed with exit code 0.</span></span></code></pre>  </article> <nav class="mt-12 grid grid-cols-2 gap-4 border-t border-border pt-6 dark:border-border-dark"> <a href="/blog/2026-06-24-astro-blog-migration" class="group text-left"> <span class="text-xs text-muted dark:text-muted-dark">&larr; <span data-i18n="post.prevPost">上一篇</span></span> <p class="mt-1 text-sm text-text group-hover:text-primary dark:text-text-dark">博客迁移至 Astro：从零搭建现代化个人站点</p> </a> <a href="/blog/rust学习笔记" class="group text-right"> <span class="text-xs text-muted dark:text-muted-dark"><span data-i18n="post.nextPost">下一篇</span> &rarr;</span> <p class="mt-1 text-sm text-text group-hover:text-primary dark:text-text-dark">Rust学习笔记</p> </a> </nav> <div class="giscus mt-12 border-t border-border pt-8 dark:border-border-dark"></div> <script type="module">const i=document.querySelector(".giscus");let n=!1;const a=new IntersectionObserver(s=>{if(s[0].isIntersecting&&!n){n=!0,a.disconnect();const e=document.documentElement.classList.contains("dark")?"dark_dimmed":"light",t=document.createElement("script");t.src="https://giscus.app/client.js",t.setAttribute("data-repo","ccnuu/ccnuu.github.io"),t.setAttribute("data-repo-id","R_kgDOJ7X2tw"),t.setAttribute("data-category","Announcements"),t.setAttribute("data-category-id","DIC_kwDOJ7X2t84CjXsS"),t.setAttribute("data-mapping","pathname"),t.setAttribute("data-reactions-enabled","1"),t.setAttribute("data-emit-metadata","0"),t.setAttribute("data-input-position","top"),t.setAttribute("data-theme",e),t.setAttribute("data-lang","zh-CN"),t.setAttribute("crossorigin","anonymous"),i.appendChild(t)}});a.observe(i);new MutationObserver(()=>{const s=document.documentElement.classList.contains("dark")?"dark_dimmed":"light",e=document.querySelector(".giscus iframe");e?.contentWindow&&e.contentWindow.postMessage({giscus:{setConfig:{theme:s}}},"https://giscus.app")}).observe(document.documentElement,{attributes:!0,attributeFilter:["class"]});</script>  </main> </div> <!-- 桌面端：固定右侧 --><div id="scroll-buttons" class="pointer-events-none fixed inset-0 z-30 hidden lg:block"> <div class="absolute bottom-28" style="right: calc(50% - 384px - 42px)"> <div class="pointer-events-auto flex flex-col gap-2"> <button id="scroll-back" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-colors hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="返回上一页" data-i18n-aria="scroll.back"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M15 18l-6-6 6-6"></path> </svg> </button> <button id="scroll-top" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-colors hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="回到顶部" data-i18n-aria="scroll.top"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M18 15l-6-6-6 6"></path> </svg> </button> <button id="scroll-bottom" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-colors hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="跳到底部" data-i18n-aria="scroll.bottom"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M6 9l6 6 6-6"></path> </svg> </button> </div> </div> </div> <!-- 手机端：右下角固定，footer 上方 --> <div id="scroll-buttons-mobile" class="pointer-events-none fixed inset-0 z-30 lg:hidden"> <div class="absolute right-4 bottom-28"> <div class="pointer-events-auto flex flex-col gap-2"> <button id="toc-btn-m" type="button" class="hidden h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-colors hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="目录" data-i18n-aria="scroll.toc"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M4 6h16M4 12h10M4 18h16"></path> </svg> </button> <button id="scroll-back-m" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-colors hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="返回上一页" data-i18n-aria="scroll.back"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M15 18l-6-6 6-6"></path> </svg> </button> <button id="scroll-top-m" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-colors hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="回到顶部" data-i18n-aria="scroll.top"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M18 15l-6-6-6 6"></path> </svg> </button> <button id="scroll-bottom-m" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-colors hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="跳到底部" data-i18n-aria="scroll.bottom"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M6 9l6 6 6-6"></path> </svg> </button> </div> </div> </div> <script type="module">(function(){var e=document.querySelector(".flex-1.overflow-y-auto");if(!e)return;document.getElementById("scroll-buttons"),document.getElementById("scroll-buttons-mobile");var n=document.getElementById("scroll-top"),o=document.getElementById("scroll-bottom"),r=document.getElementById("scroll-back"),c=document.getElementById("scroll-top-m"),l=document.getElementById("scroll-bottom-m"),d=document.getElementById("scroll-back-m");function s(){var t=e.scrollHeight>e.clientHeight;n&&(n.style.display=t?"":"none"),o&&(o.style.display=t?"":"none"),c&&(c.style.display=t?"":"none"),l&&(l.style.display=t?"":"none")}s(),window.addEventListener("resize",s);function i(t){e.scrollTo({top:t,behavior:"smooth"})}r&&r.addEventListener("click",function(){history.back()}),n&&n.addEventListener("click",function(){i(0)}),o&&o.addEventListener("click",function(){i(e.scrollHeight)}),d&&d.addEventListener("click",function(){history.back()}),c&&c.addEventListener("click",function(){i(0)}),l&&l.addEventListener("click",function(){i(e.scrollHeight)})})();</script> </div> <div class="pointer-events-none fixed inset-0 z-30 hidden lg:block"> <div class="absolute top-24" style="left: calc(50% - 384px - 224px - 48px)"> <div class="pointer-events-auto w-56 space-y-4"> <aside> <div class="space-y-4 glass-card p-5"> <div class="flex flex-col items-center text-center"> <a href="/"> <img src="/favicon.svg" alt="avatar" class="mb-3 h-20 w-20 rounded-full border-2 border-border transition-opacity hover:opacity-80 dark:border-border-dark"> </a> <a href="/" class="text-lg font-semibold text-text hover:text-primary dark:text-text-dark"> ccnuu </a> <p class="mt-1 text-xs text-muted dark:text-muted-dark">  </p> </div> <hr class="border-border dark:border-border-dark"> <div class="space-y-2 text-sm"> <a href="https://github.com/ccnuu" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark"> <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"> <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"></path> </svg>
+GitHub
+</a> <a href="mailto:cy.arctique@gmail.com" class="flex items-center gap-2 text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark"> <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"></path> </svg>
+Email
+</a> </div> </div> </aside> <a href="https://github.com/ccnuu" target="_blank" rel="noopener noreferrer" class="glass-card block overflow-hidden transition-shadow hover:shadow-lg"> <img src="https://ghchart.rshah.org/ccnuu" alt="GitHub contributions" class="w-full h-auto" loading="lazy"> </a> </div> </div> </div> <footer class="shrink-0 glass py-6"> <div class="mx-auto max-w-3xl px-4 text-center text-sm text-muted dark:text-muted-dark"> <p>&copy; 2026 ccnuu. Built with <a href="https://astro.build" class="underline hover:text-text dark:hover:text-text-dark" rel="noopener noreferrer">Astro</a>.</p> <p class="mt-1"> <span data-i18n="footer.running">博客已运行</span> <span id="runtime" data-start="2023-07-14T00:00:00.000Z">—</span> </p> </div> </footer> <script type="module">const e=document.getElementById("runtime"),a=new Date(e.dataset.start);function n(){const t=Math.floor((new Date().getTime()-a.getTime())/(1e3*60*60*24)),o=document.documentElement.lang||"zh";e.textContent=o==="zh"?`${t} 天`:`${t} days`}n();setInterval(n,6e4);</script> <div id="search-modal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true"> <div class="mx-auto mt-[15vh] max-w-xl px-4"> <div class="glass-strong rounded-xl p-4 shadow-2xl"> <div id="search-input-container"></div> <div id="search-results" class="max-h-[50vh] space-y-2 overflow-y-auto empty:hidden"></div> <p id="search-empty" class="hidden py-8 text-center text-sm text-muted dark:text-muted-dark"></p> </div> </div> </div> <script type="module">const d=document.getElementById("search-modal"),m=document.getElementById("search-input-container"),a=document.getElementById("search-results"),r=document.getElementById("search-empty"),p=document.documentElement.lang||"zh",o=p==="zh",t=document.createElement("input");t.id="search-input";t.type="text";t.placeholder=o?"搜索文章...":"Search articles...";t.className="mb-3 w-full rounded-lg border border-border bg-transparent px-4 py-3 text-text outline-none focus:border-primary dark:border-border-dark dark:text-text-dark";m.appendChild(t);r.textContent=o?"无结果":"No results";d.addEventListener("click",e=>{e.target===d&&(d.classList.add("hidden"),t.value="",a.innerHTML="",r.classList.add("hidden"))});document.addEventListener("keydown",e=>{e.key==="Escape"&&(d.classList.add("hidden"),t.value="",a.innerHTML="",r.classList.add("hidden")),(e.ctrlKey||e.metaKey)&&e.key==="k"&&(e.preventDefault(),d.classList.remove("hidden"),setTimeout(()=>t.focus(),100))});let l;t.addEventListener("input",()=>{clearTimeout(l),l=setTimeout(async()=>{const e=t.value.trim();if(!e){a.innerHTML="",r.classList.add("hidden");return}try{const i=await window.__pagefindSearch?.();if(!i)return;const s=await i.search(e);if(!s||!s.results.length){a.innerHTML="",r.classList.remove("hidden");return}r.classList.add("hidden");const u=await Promise.all(s.results.slice(0,8).map(async n=>{const c=await n.data();return{url:c.url,title:c.meta?.title??n.id,excerpt:c.excerpt}}));a.innerHTML=u.map(n=>`
+            <a href="${n.url}" class="block rounded-lg p-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
+              <p class="text-sm font-medium text-text dark:text-text-dark">${n.title}</p>
+              <p class="mt-1 text-xs text-muted dark:text-muted-dark line-clamp-2">${n.excerpt}</p>
+            </a>
+          `).join("")}catch{a.innerHTML=""}},200)});</script> <script>
+  let pagefindReady = null;
+  window.__pagefindSearch = function () {
+    if (!pagefindReady) {
+      pagefindReady = import('/pagefind/pagefind.js')
+        .then(async (m) => { await m.init(); return m; })
+        .catch(() => null);
+    }
+    return pagefindReady;
+  };
+</script> <script>
+      document.querySelectorAll('.theme-toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var cur = localStorage.getItem('theme') || 'dark';
+          var next = cur === 'dark' ? 'light' : 'dark';
+          localStorage.setItem('theme', next);
+          var d = document.documentElement;
+          if (next === 'dark') { d.classList.add('dark'); }
+          else { d.classList.remove('dark'); }
+        });
+      });
+    </script> <!-- client-side i18n --> <script>
+      (function() {
+        var en = window.__i18n_en;
+        if (!en) return;
+        function t(key) {
+          var keys = key.split('.'), v = en;
+          for (var i = 0; i < keys.length; i++) { if (!v) return key; v = v[keys[i]]; }
+          return typeof v === 'string' ? v : key;
+        }
+        function swap() {
+          document.querySelectorAll('[data-i18n]').forEach(function(el) {
+            el.textContent = t(el.getAttribute('data-i18n'));
+          });
+          document.querySelectorAll('[data-i18n-aria]').forEach(function(el) {
+            el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
+          });
+          document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
+            el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph')));
+          });
+        }
+        // Run after full DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', swap);
+        } else {
+          swap();
+        }
+      })();
+    </script> </body> </html>  <script type="module">document.querySelectorAll("article pre").forEach(e=>{const t=document.createElement("button");t.className="copy-btn",t.innerHTML=`
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="9" y="9" width="13" height="13" rx="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+      </svg>`,t.addEventListener("click",async o=>{o.stopPropagation();const i=e.querySelector("code")?.textContent??e.textContent??"";await navigator.clipboard.writeText(i),t.classList.add("copied"),t.innerHTML=`
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>`,setTimeout(()=>{t.classList.remove("copied"),t.innerHTML=`
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>`},2e3)}),e.appendChild(t)});</script> <!-- 桌面端：固定右侧 TOC --> <div class="pointer-events-none fixed inset-0 z-30 hidden lg:block"> <div class="absolute top-24 bottom-28 overflow-y-auto pointer-events-auto w-48" style="right: calc(50% - 384px - 192px - 48px)"> <nav><h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-muted dark:text-muted-dark" data-i18n="post.toc">目录</h2><ul class="space-y-1 border-l border-border dark:border-border-dark"><li><a href="#前言" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">前言</a></li><li><a href="#准备" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">准备</a></li><li><a href="#构建" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">构建</a></li><li><a href="#补充" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">补充</a></li><li><a href="#测试" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">测试</a></li></ul></nav> </div> </div> <!-- 手机端：浮动 TOC 按钮 -->  <div id="toc-mobile-overlay" class="fixed inset-0 z-40 hidden bg-black/50 lg:hidden" role="dialog"> <div class="absolute right-4 top-1/2 -translate-y-1/2 w-64 max-h-[80vh] rounded-lg glass-strong p-6 shadow-2xl flex flex-col"> <div class="flex items-center justify-between mb-4 shrink-0"> <h3 class="font-semibold text-text dark:text-text-dark" data-i18n="post.toc">目录</h3> <button id="toc-mobile-close" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark"> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M18 6L6 18M6 6l12 12"></path> </svg> </button> </div> <div class="overflow-y-auto flex-1 min-h-0"> <nav><ul class="space-y-1 border-l border-border dark:border-border-dark"><li><a href="#前言" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">前言</a></li><li><a href="#准备" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">准备</a></li><li><a href="#构建" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">构建</a></li><li><a href="#补充" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">补充</a></li><li><a href="#测试" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">测试</a></li></ul></nav> </div> </div> </div>  <script type="module">const t=document.getElementById("toc-btn-m"),e=document.getElementById("toc-mobile-overlay"),d=document.getElementById("toc-mobile-close");t&&e&&d&&(t.classList.remove("hidden"),t.classList.add("flex"),t.addEventListener("click",()=>e.classList.remove("hidden")),d.addEventListener("click",()=>e.classList.add("hidden")),e.addEventListener("click",c=>{c.target===e&&e.classList.add("hidden")}));</script>
