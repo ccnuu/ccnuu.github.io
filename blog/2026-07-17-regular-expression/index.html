@@ -1,0 +1,913 @@
+<!DOCTYPE html><html lang="zh"> <head><script>
+      (function(){
+        // theme
+        var d = document.documentElement;
+        var t = localStorage.getItem('theme') || 'dark';
+        if (t === 'dark') d.classList.add('dark');
+        else d.classList.remove('dark');
+        // language
+        var lang = localStorage.getItem('lang') || 'zh';
+        d.lang = lang;
+        // i18n swap - run before body renders to avoid flash
+        if (lang !== 'zh') {
+          var en={"nav":{"archive":"Archive","tags":"Tags","about":"About","links":"Links","search":"Search articles...","menu":"Menu"},"pagination":{"prev":"Previous","next":"Next"},"post":{"publishedOn":"Published on","updatedOn":"Updated on","words":"words","prevPost":"Previous post","nextPost":"Next post","toc":"Table of Contents"},"footer":{"running":"Blog running for"},"scroll":{"top":"Back to top","bottom":"Scroll to bottom","toc":"Table of Contents","back":"Go back"},"theme":{"toggle":"Toggle theme"},"notFound":{"title":"Page Not Found","message":"Sorry, this page does not exist.","back":"Back to Home"},"about":{"title":"About"},"links":{"title":"Links"},"tags":{"title":"Tags","articles":"articles"},"blog":{"archive":"Archive","page":"Page","page2":""},"searchModal":{"noResults":"No results"},"lang":{"label":"Language"}};
+          window.__i18n_en = en;
+        }
+      })();
+    </script><meta charset="utf-8"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" href="/favicon.ico"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="Astro v6.4.3"><title>正则表达式完全指北 | ccnuu blog</title><meta name="description" content="系统讲解正则表达式语法，涵盖字符类、量词、分组、断言、标志位等核心概念，并附大量实战示例"><!-- Open Graph --><meta property="og:title" content="正则表达式完全指北 | ccnuu blog"><meta property="og:description" content="系统讲解正则表达式语法，涵盖字符类、量词、分组、断言、标志位等核心概念，并附大量实战示例"><meta property="og:image" content="https://ccnuu.github.io/og-default.png"><meta property="og:url" content="https://ccnuu.github.io/blog/2026-07-17-regular-expression/"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><!-- Canonical --><link rel="canonical" href="https://ccnuu.github.io/blog/2026-07-17-regular-expression/"><!-- RSS --><link rel="alternate" type="application/rss+xml" title="ccnuu blog" href="/rss.xml"><style>article pre{position:relative}article pre .copy-btn{position:absolute;top:.5rem;right:.5rem;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:.25rem;border:1px solid #334155;background:#1e293b;color:#94a3b8;cursor:pointer;opacity:0;transition:opacity .15s;z-index:10}article pre:hover .copy-btn{opacity:1}article pre .copy-btn:hover{color:#e2e8f0;border-color:#475569}article pre .copy-btn.copied{color:#4ade80;border-color:#4ade80}
+</style>
+<link rel="stylesheet" href="/_astro/BaseLayout.pH8ee43M.css"></head> <body class="flex h-dvh flex-col overflow-hidden text-text antialiased dark:text-text-dark"> <header class="z-50 shrink-0 glass-strong"> <nav class="mx-auto flex max-w-3xl items-center px-6 py-3"> <!-- 仅手机端：头像 + 昵称 --> <a href="/" class="flex items-center gap-2.5 text-lg font-bold text-text hover:text-primary dark:text-text-dark md:hidden"> <img src="/favicon.svg" alt="logo" class="h-8 w-8 rounded-full"> <span>ccnuu</span> </a> <!-- 桌面端导航：左 链接 / 右 功能按钮 --> <div class="hidden w-full items-center md:flex"> <div class="flex items-center gap-6"> <a href="/blog" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.archive">归档</a> <a href="/tags" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.tags">标签</a> <a href="/about" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.about">关于</a> <a href="/links" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.links">友链</a> </div> <div class="ml-auto flex items-center gap-3"> <a href="/rss.xml" target="_blank" class="rounded p-1.5 text-muted transition-transform active:scale-90 hover:text-[#f97316] dark:text-muted-dark dark:hover:text-[#fb923c]" title="RSS" aria-label="RSS"> <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"> <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93v-2.83z"></path> </svg> </a> <button type="button" class="search-toggle-btn text-muted transition-transform active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="搜索"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <circle cx="11" cy="11" r="8"></circle> <path d="M21 21l-4.35-4.35"></path> </svg> </button> <script type="module">document.querySelectorAll(".search-toggle-btn").forEach(e=>{e.addEventListener("click",()=>{document.getElementById("search-modal").classList.remove("hidden"),setTimeout(()=>{document.getElementById("search-input")?.focus()},100)})});</script> <button type="button" class="theme-toggle-btn rounded p-1.5 text-muted transition-transform active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="切换主题" data-i18n-aria="theme.toggle"> <span class="block h-5 w-5 dark:hidden"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"></path> </svg> </span> <span class="hidden h-5 w-5 dark:block"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"></path> </svg> </span> </button> <button id="lang-switch" type="button" class="text-xs font-medium text-muted transition-opacity active:opacity-60 hover:text-primary dark:text-muted-dark dark:hover:text-blue-400" title="Language">EN</button> </div> </div> <!-- 手机端：头像 + 功能按钮 --> <div class="ml-auto flex items-center gap-3 md:hidden"> <a href="/rss.xml" target="_blank" class="rounded p-1.5 text-muted transition-transform active:scale-90 hover:text-[#f97316] dark:text-muted-dark dark:hover:text-[#fb923c]" title="RSS" aria-label="RSS"> <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"> <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93v-2.83z"></path> </svg> </a> <button type="button" class="search-toggle-btn text-muted transition-transform active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="搜索"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <circle cx="11" cy="11" r="8"></circle> <path d="M21 21l-4.35-4.35"></path> </svg> </button>  <button type="button" class="theme-toggle-btn rounded p-1.5 text-muted transition-transform active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="切换主题" data-i18n-aria="theme.toggle"> <span class="block h-5 w-5 dark:hidden"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"></path> </svg> </span> <span class="hidden h-5 w-5 dark:block"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"></path> </svg> </span> </button> <button id="lang-switch-m" type="button" class="text-xs font-medium text-muted transition-opacity active:opacity-60 hover:text-primary dark:text-muted-dark dark:hover:text-blue-400" title="Language">EN</button> <button id="mobile-menu-btn" type="button" class="text-muted transition-transform active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="菜单" data-i18n-aria="nav.menu" onclick="var m=document.getElementById('mobile-menu');m.style.display=m.style.display==='none'?'block':'none';event.stopPropagation();"> <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M4 6h16M4 12h16M4 18h16"></path> </svg> </button> </div> </nav> <!-- 手机端覆盖菜单 --> <div id="mobile-menu" class="fixed inset-x-0 top-[53px] z-40 glass-strong px-6 pb-6 pt-4 shadow-lg md:hidden" style="display:none" onclick="event.stopPropagation()"> <div class="flex flex-col items-center gap-4 text-base"> <a href="/blog" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.archive">归档</a> <a href="/tags" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.tags">标签</a> <a href="/about" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.about">关于</a> <a href="/links" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.links">友链</a> </div> </div> </header> <script>
+  var mobileMenu = document.getElementById('mobile-menu');
+  document.addEventListener('click', function () {
+    if (mobileMenu && mobileMenu.style.display !== 'none') {
+      mobileMenu.style.display = 'none';
+    }
+  });
+  var mq = window.matchMedia('(min-width: 768px)');
+  mq.addEventListener('change', function () {
+    if (mq.matches && mobileMenu && mobileMenu.style.display !== 'none') {
+      mobileMenu.style.display = 'none';
+    }
+  });
+
+  // Language switcher
+  (function(){
+    var lang = localStorage.getItem('lang') || 'zh';
+    var btns = [document.getElementById('lang-switch'), document.getElementById('lang-switch-m')];
+    btns.forEach(function(btn){
+      if (!btn) return;
+      btn.textContent = lang === 'zh' ? 'EN' : '中文';
+      btn.addEventListener('click', function(){
+        var next = lang === 'zh' ? 'en' : 'zh';
+        localStorage.setItem('lang', next);
+        location.reload();
+      });
+    });
+  })();
+</script> <div class="flex-1 overflow-y-auto"> <div class="relative mx-auto max-w-3xl px-4 py-8"> <main class="glass-card p-6 sm:p-8">  <article class="prose max-w-none"> <header class="mb-8"> <h1 class="mb-4 text-3xl font-bold text-text dark:text-text-dark"> 正则表达式完全指北 </h1> <div class="flex flex-wrap items-center gap-4 text-sm text-muted dark:text-muted-dark"> <time datetime="2026-07-17T00:00:00.000Z"> <span data-i18n="post.publishedOn">发布于</span> 2026年7月17日 </time>  <span>· 11403 <span data-i18n="post.words">字</span></span> </div> <div class="mt-4 flex flex-wrap gap-2"> <a href="/tags/正则表达式" class="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-muted transition-colors active:opacity-70 hover:bg-primary hover:text-white dark:bg-gray-800 dark:text-muted-dark dark:hover:bg-primary">
+# 正则表达式 </a><a href="/tags/Regular Expression" class="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-muted transition-colors active:opacity-70 hover:bg-primary hover:text-white dark:bg-gray-800 dark:text-muted-dark dark:hover:bg-primary">
+# Regular Expression </a><a href="/tags/Regular" class="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-muted transition-colors active:opacity-70 hover:bg-primary hover:text-white dark:bg-gray-800 dark:text-muted-dark dark:hover:bg-primary">
+# Regular </a> </div> </header>  <h2 id="什么是正则表达式">什么是正则表达式</h2>
+<p>正则表达式（Regular Expression，简称 regex 或 regexp）是一种描述字符串模式的微型语言。它用一个简洁的字符串来「匹配、查找、替换」符合某种规则的文本，广泛应用于表单校验、日志分析、数据清洗、爬虫提取等场景。</p>
+<p>几乎所有主流语言都内置了正则引擎（JavaScript、Python、Java、Go、Rust、PHP、Ruby……），核心语法高度一致，只是 API 和少数特性略有差异。本文以通用语法为主线讲解，并在末尾给出不同语言的用法对比。</p>
+<blockquote>
+<p>阅读提示：本文所有示例中，<code>//</code> 之间是正则模式，<code>=></code> 后面是匹配结果，<code>✅</code> 表示命中，<code>❌</code> 表示不命中。</p>
+</blockquote>
+<hr>
+<h2 id="基础语法">基础语法</h2>
+<h3 id="字面量字符">字面量字符</h3>
+<p>最简单的正则就是「按字面匹配」。写什么字符，就匹配什么字符：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：cat</span></span>
+<span class="line"><span>"the cat sat"  => 匹配 "cat"</span></span>
+<span class="line"><span>"category"     => 匹配 "cat"（category 开头的 cat）</span></span></code></pre>
+<p>正则默认<strong>区分大小写</strong>，<code>cat</code> 不会匹配 <code>Cat</code>。若要忽略大小写，使用 <code>i</code> 标志（见后文）。</p>
+<h3 id="元字符">元字符</h3>
+<p>以下字符在正则中具有<strong>特殊含义</strong>，称为元字符：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>元字符</th><th>含义</th></tr></thead><tbody><tr><td><code>.</code></td><td>匹配任意单个字符（除换行符外，除非用 <code>s</code> 标志）</td></tr><tr><td><code>^</code></td><td>匹配字符串开头</td></tr><tr><td><code>$</code></td><td>匹配字符串结尾</td></tr><tr><td><code>*</code></td><td>重复 0 次或多次</td></tr><tr><td><code>+</code></td><td>重复 1 次或多次</td></tr><tr><td><code>?</code></td><td>重复 0 次或 1 次（可选）</td></tr><tr><td><code>{n}</code> <code>{n,}</code> <code>{n,m}</code></td><td>重复指定次数</td></tr><tr><td><code>[...]</code></td><td>字符类，匹配其中任意一个字符</td></tr><tr><td><code>(...)</code></td><td>分组与捕获</td></tr><tr><td>`</td><td>`</td></tr><tr><td><code>\</code></td><td>转义，或引入预定义字符</td></tr><tr><td><code>\d</code> <code>\w</code> <code>\s</code></td><td>预定义字符类（见下文）</td></tr></tbody></table>
+<p>要匹配元字符本身，用 <code>\</code> 转义。例如匹配字面的 <code>.</code>、<code>*</code>、<code>?</code>：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：a\.b</span></span>
+<span class="line"><span>"a.b"  => ✅ 匹配 "a.b"</span></span>
+<span class="line"><span>"axb"  => ❌（. 被转义后只能匹配字面点号）</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：\$\d+</span></span>
+<span class="line"><span>"$100" => ✅ 匹配 "$100"</span></span></code></pre>
+<h3 id="点号--与通配">点号 <code>.</code> 与通配</h3>
+<p><code>.</code> 是最常用的「通配符」，匹配<strong>任意单个字符</strong>（默认不含换行符）：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：c.t</span></span>
+<span class="line"><span>"cat"  => ✅</span></span>
+<span class="line"><span>"c@t"  => ✅</span></span>
+<span class="line"><span>"co t" => ✅（中间是空格也算一个字符）</span></span>
+<span class="line"><span>"ct"   => ❌（. 必须匹配一个字符）</span></span></code></pre>
+<p>如果希望 <code>.</code> 也能匹配换行符，在 JavaScript 中使用 <code>s</code>（dotAll）标志：<code>/a.b/s</code>。</p>
+<hr>
+<h2 id="字符类">字符类</h2>
+<h3 id="基本字符类-">基本字符类 <code>[...]</code></h3>
+<p>方括号表示「匹配其中任意一个字符」：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：[aeiou]    匹配任意一个元音字母</span></span>
+<span class="line"><span>"hello" => 匹配 "e"、"o"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：gr[ae]y     匹配 gray 或 grey</span></span>
+<span class="line"><span>"gray"  => ✅</span></span>
+<span class="line"><span>"grey"  => ✅</span></span>
+<span class="line"><span>"groy"  => ❌</span></span></code></pre>
+<h3 id="范围">范围</h3>
+<p>在字符类内用 <code>-</code> 表示范围：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：[a-z]      匹配任意小写字母</span></span>
+<span class="line"><span>模式：[A-Z]      匹配任意大写字母</span></span>
+<span class="line"><span>模式：[0-9]      匹配任意数字</span></span>
+<span class="line"><span>模式：[a-zA-Z0-9] 匹配字母或数字</span></span></code></pre>
+<p>常见范围速查：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>范围</th><th>含义</th></tr></thead><tbody><tr><td><code>[a-z]</code></td><td>小写字母 a–z</td></tr><tr><td><code>[A-Z]</code></td><td>大写字母 A–Z</td></tr><tr><td><code>[0-9]</code></td><td>数字 0–9</td></tr><tr><td><code>[a-f]</code></td><td>十六进制字符 a–f</td></tr><tr><td><code>[\u4e00-\u9fa5]</code></td><td>基本中文字符</td></tr></tbody></table>
+<blockquote>
+<p>范围依据字符的 Unicode 码点。<code>[A-z]</code> 看似涵盖所有字母，但实际包含了 <code>[ \ ] ^ _ `</code> 等字符，不推荐使用。</p>
+</blockquote>
+<h3 id="取反字符类-">取反字符类 <code>[^...]</code></h3>
+<p>在方括号开头加 <code>^</code> 表示「匹配<strong>不在</strong>列表中的任意字符」：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：[^0-9]     匹配任意非数字字符</span></span>
+<span class="line"><span>"abc123" => 匹配 "a"、"b"、"c"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：[^aeiou]   匹配任意非元音字符</span></span></code></pre>
+<p>注意：<code>^</code> 只有在字符类<strong>开头</strong>才表示取反，写在中间就是普通字符：<code>[a^b]</code> 匹配 <code>a</code>、<code>^</code>、<code>b</code>。</p>
+<hr>
+<h2 id="预定义字符类">预定义字符类</h2>
+<p>正则内置了一批简写，等价于常用字符类，使用频率极高：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>简写</th><th>等价写法</th><th>含义</th></tr></thead><tbody><tr><td><code>\d</code></td><td><code>[0-9]</code></td><td>数字</td></tr><tr><td><code>\D</code></td><td><code>[^0-9]</code></td><td>非数字</td></tr><tr><td><code>\w</code></td><td><code>[A-Za-z0-9_]</code></td><td>单词字符（字母、数字、下划线）</td></tr><tr><td><code>\W</code></td><td><code>[^A-Za-z0-9_]</code></td><td>非单词字符</td></tr><tr><td><code>\s</code></td><td><code>[ \t\n\r\f\v]</code></td><td>空白字符（空格、制表符、换行等）</td></tr><tr><td><code>\S</code></td><td><code>[^ \t\n\r\f\v]</code></td><td>非空白字符</td></tr><tr><td><code>.</code></td><td>—</td><td>任意字符（除换行）</td></tr></tbody></table>
+<p>示例：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：\d\d\d-\d\d\d\d</span></span>
+<span class="line"><span>"123-4567" => ✅</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：\w+@\w+</span></span>
+<span class="line"><span>"user@host" => ✅</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：\S+        匹配连续非空白字符（常用于提取单词）</span></span>
+<span class="line"><span>"hello world" => 匹配 "hello"、"world"</span></span></code></pre>
+<h3 id="其他特殊转义">其他特殊转义</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>写法</th><th>含义</th></tr></thead><tbody><tr><td><code>\t</code></td><td>制表符 Tab</td></tr><tr><td><code>\n</code></td><td>换行符</td></tr><tr><td><code>\r</code></td><td>回车符</td></tr><tr><td><code>\f</code></td><td>换页符</td></tr><tr><td><code>\v</code></td><td>垂直制表符</td></tr><tr><td><code>\0</code></td><td>NUL 字符</td></tr><tr><td><code>\xHH</code></td><td>十六进制字符（如 <code>\x41</code> = <code>A</code>）</td></tr><tr><td><code>\uHHHH</code></td><td>Unicode 字符（如 <code>\u4e2d</code> = <code>中</code>）</td></tr></tbody></table>
+<hr>
+<h2 id="量词">量词</h2>
+<p>量词控制前一个元素重复的次数。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>量词</th><th>含义</th><th>等价</th></tr></thead><tbody><tr><td><code>*</code></td><td>0 次或多次</td><td><code>{0,}</code></td></tr><tr><td><code>+</code></td><td>1 次或多次</td><td><code>{1,}</code></td></tr><tr><td><code>?</code></td><td>0 次或 1 次（可选）</td><td><code>{0,1}</code></td></tr><tr><td><code>{n}</code></td><td>恰好 n 次</td><td>—</td></tr><tr><td><code>{n,}</code></td><td>至少 n 次</td><td>—</td></tr><tr><td><code>{n,m}</code></td><td>n 到 m 次</td><td>—</td></tr></tbody></table>
+<p>示例：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：colou?r     u 可有可无</span></span>
+<span class="line"><span>"color"  => ✅</span></span>
+<span class="line"><span>"colour" => ✅</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：\d{3}       恰好 3 位数字</span></span>
+<span class="line"><span>"abc123" => 匹配 "123"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：\d{4,}      至少 4 位数字</span></span>
+<span class="line"><span>"1234567" => ✅</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：\d{2,4}     2 到 4 位数字</span></span>
+<span class="line"><span>"12"    => ✅</span></span>
+<span class="line"><span>"1234"  => ✅</span></span>
+<span class="line"><span>"12345" => 匹配前 4 位 "1234"（默认贪心但受上限制约）</span></span></code></pre>
+<h3 id="贪婪与非贪婪">贪婪与非贪婪</h3>
+<p>量词默认是<strong>贪婪</strong>（greedy）的，会尽可能多地匹配。在量词后加 <code>?</code> 变为<strong>非贪婪</strong>（lazy / 懒惰），尽可能少地匹配：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：&#x3C;.*>         贪婪</span></span>
+<span class="line"><span>"&#x3C;a>&#x3C;b>" => 匹配整个 "&#x3C;a>&#x3C;b>"（一直吃到最后的 >）</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：&#x3C;.*?>        非贪婪</span></span>
+<span class="line"><span>"&#x3C;a>&#x3C;b>" => 只匹配 "&#x3C;a>"（遇到第一个 > 就停）</span></span></code></pre>
+<p>三种匹配模式对比（以 <code>a+</code> 为例作用于 <code>"aaa"</code>）：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>模式</th><th>写法</th><th>结果</th><th>说明</th></tr></thead><tbody><tr><td>贪婪</td><td><code>a+</code></td><td><code>aaa</code></td><td>尽量多匹配</td></tr><tr><td>非贪婪</td><td><code>a+?</code></td><td><code>a</code></td><td>尽量少匹配</td></tr><tr><td>占有（部分语言）</td><td><code>a++</code></td><td><code>aaa</code></td><td>一次吞完，不回溯</td></tr></tbody></table>
+<blockquote>
+<p>占有量词（<code>++</code>、<code>*+</code>、<code>?+</code>、<code>{n,m}+</code>）在 Java、PCRE 中可用，JavaScript 和 Python 默认不支持。它能避免灾难性回溯，提升性能。</p>
+</blockquote>
+<hr>
+<h2 id="边界与锚点">边界与锚点</h2>
+<p>锚点不匹配具体字符，而是匹配「位置」。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>锚点</th><th>含义</th></tr></thead><tbody><tr><td><code>^</code></td><td>字符串开头（多行模式下匹配每行开头）</td></tr><tr><td><code>$</code></td><td>字符串结尾（多行模式下匹配每行结尾）</td></tr><tr><td><code>\b</code></td><td>单词边界</td></tr><tr><td><code>\B</code></td><td>非单词边界</td></tr></tbody></table>
+<h3 id="-与-"><code>^</code> 与 <code>$</code></h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：^\d+         以数字开头</span></span>
+<span class="line"><span>"123abc" => ✅</span></span>
+<span class="line"><span>"abc123" => ❌</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：\d+$         以数字结尾</span></span>
+<span class="line"><span>"abc123" => ✅</span></span>
+<span class="line"><span>"123abc" => ❌</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：^\d+$        整个字符串全是数字</span></span>
+<span class="line"><span>"12345"  => ✅</span></span>
+<span class="line"><span>"12a45"  => ❌</span></span></code></pre>
+<h3 id="单词边界-b">单词边界 <code>\b</code></h3>
+<p><code>\b</code> 是「单词字符 <code>\w</code>」与「非单词字符 <code>\W</code>」之间的位置，常用于精确匹配整个单词：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：\bcat\b</span></span>
+<span class="line"><span>"cat"      => ✅</span></span>
+<span class="line"><span>"a cat."   => ✅</span></span>
+<span class="line"><span>"category" => ❌（cat 后面跟字母，不是边界）</span></span>
+<span class="line"><span>"concat"   => ❌（cat 前面是字母，不是边界）</span></span></code></pre>
+<p><code>\B</code> 则相反，匹配「非边界」位置：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：\Bcat</span></span>
+<span class="line"><span>"concat" => ✅（cat 前面是字母，属非边界）</span></span>
+<span class="line"><span>"cat"    => ❌（开头就是边界）</span></span></code></pre>
+<hr>
+<h2 id="分组与捕获">分组与捕获</h2>
+<h3 id="捕获分组-">捕获分组 <code>(...)</code></h3>
+<p>圆括号将多个字符视为一个整体，并对匹配内容进行<strong>捕获</strong>（保存到分组中，可后续引用）：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：ab+          重复的是 b</span></span>
+<span class="line"><span>"abbb" => ✅</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：(ab)+        重复的是 ab 这个整体</span></span>
+<span class="line"><span>"ababab" => ✅</span></span></code></pre>
+<p>捕获的分组可以按编号取出。编号按左括号出现的顺序从 1 开始：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：(\d{4})-(\d{2})-(\d{2})     日期提取</span></span>
+<span class="line"><span>"2026-07-17"</span></span>
+<span class="line"><span>  分组1 => "2026"</span></span>
+<span class="line"><span>  分组2 => "07"</span></span>
+<span class="line"><span>  分组3 => "17"</span></span></code></pre>
+<h3 id="非捕获分组-">非捕获分组 <code>(?:...)</code></h3>
+<p>如果只想分组、不需要捕获，用 <code>(?:...)</code>，避免占用分组编号，性能也更好：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：(?:https?|ftp)://\S+        匹配协议 + URL</span></span>
+<span class="line"><span>"http://example.com"  => ✅</span></span>
+<span class="line"><span>"https://example.com" => ✅</span></span>
+<span class="line"><span>"ftp://files.example" => ✅</span></span></code></pre>
+<h3 id="命名分组-name">命名分组 <code>(?&#x3C;name>...)</code></h3>
+<p>给分组起名字，可读性更强（JavaScript 用 <code>(?&#x3C;name>...)</code>，Python 用 <code>(?P&#x3C;name>...)</code>）：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：(?&#x3C;year>\d{4})-(?&#x3C;month>\d{2})-(?&#x3C;day>\d{2})</span></span>
+<span class="line"><span>"2026-07-17"</span></span>
+<span class="line"><span>  year  => "2026"</span></span>
+<span class="line"><span>  month => "07"</span></span>
+<span class="line"><span>  day   => "17"</span></span></code></pre>
+<h3 id="反向引用-1">反向引用 <code>\1</code></h3>
+<p>在模式内部引用前面捕获的内容，用 <code>\1</code>、<code>\2</code>……（命名分组可用 <code>\k&#x3C;name></code>）。常用于匹配成对出现的内容：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：(\w+)\s\1      单词后跟空格再跟相同的单词</span></span>
+<span class="line"><span>"hello hello" => ✅</span></span>
+<span class="line"><span>"hello world" => ❌</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：(['"])[^'"]*\1   匹配成对引号包裹的字符串</span></span>
+<span class="line"><span>"'hello'" => ✅</span></span>
+<span class="line"><span>'"hello"' => ✅</span></span>
+<span class="line"><span>"'hello\"" => ❌（引号不配对）</span></span></code></pre>
+<hr>
+<h2 id="选择分支">选择（分支）</h2>
+<p><code>|</code> 表示「或」，在多个备选项中匹配任意一个：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：cat|dog|bird</span></span>
+<span class="line"><span>"cat"  => ✅</span></span>
+<span class="line"><span>"dog"  => ✅</span></span>
+<span class="line"><span>"bird" => ✅</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：yes|no</span></span>
+<span class="line"><span>"yes" => ✅</span></span>
+<span class="line"><span>"no"  => ✅</span></span></code></pre>
+<p><code>|</code> 的作用范围到最近的分组边界。注意结合优先级带来的坑：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：\bcat|dog\b</span></span>
+<span class="line"><span>本意是「cat 或 dog 单词」，但实际是「单词边界+cat」或「dog+单词边界」</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>正确写法：\b(cat|dog)\b</span></span>
+<span class="line"><span>"cat" => ✅</span></span>
+<span class="line"><span>"dog" => ✅</span></span>
+<span class="line"><span>"category" => ❌</span></span></code></pre>
+<p>用 <code>(?:...)</code> 包裹可以避免不想要的捕获：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：\b(?:cat|dog|bird)\b   匹配三种动物单词之一，不捕获</span></span></code></pre>
+<hr>
+<h2 id="转义">转义</h2>
+<p>用 <code>\</code> 让元字符回归字面含义，或让普通字符获得特殊含义：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：\.\*\?      匹配字面的 ".*?"</span></span>
+<span class="line"><span>"a.*?b" => ✅</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：\(\d+\)     匹配括号包裹的数字</span></span>
+<span class="line"><span>"(123)" => ✅</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：C:\\Windows  匹配 Windows 路径</span></span>
+<span class="line"><span>"C:\Windows" => ✅</span></span></code></pre>
+<p>常用需要转义的元字符一览：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="plaintext"><code><span class="line"><span>. * + ? ^ $ { } [ ] ( ) | \</span></span></code></pre>
+<blockquote>
+<p>提示：在字符类 <code>[...]</code> 内部，大部分元字符失去特殊含义，无需转义。例如 <code>[.]</code> 匹配字面点号，<code>[*+?]</code> 匹配这三个字符之一。但在 <code>[]</code> 内仍需转义的有 <code>]</code>、<code>\</code>、<code>^</code>（在开头时）、<code>-</code>（在中间表示范围时）。</p>
+</blockquote>
+<hr>
+<h2 id="断言lookaround">断言（Lookaround）</h2>
+<p>断言「向某个方向看一眼」是否满足条件，但<strong>不消耗字符</strong>（不占用匹配结果）。</p>
+<h3 id="先行断言lookahead">先行断言（Lookahead）</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>写法</th><th>名称</th><th>含义</th></tr></thead><tbody><tr><td><code>(?=...)</code></td><td>正向先行</td><td>右边必须匹配</td></tr><tr><td><code>(?!...)</code></td><td>负向先行</td><td>右边必须不匹配</td></tr></tbody></table>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：\d+(?=元)        数字后面跟着「元」</span></span>
+<span class="line"><span>"价格100元" => 匹配 "100"（不包含「元」）</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：\d+(?!元)        数字后面不是「元」</span></span>
+<span class="line"><span>"100元 200千克" => 匹配 "200"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：\b\w+(?!ing\b)   不以 ing 结尾的单词</span></span></code></pre>
+<h3 id="后行断言lookbehind">后行断言（Lookbehind）</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>写法</th><th>名称</th><th>含义</th></tr></thead><tbody><tr><td><code>(?&#x3C;=...)</code></td><td>正向后行</td><td>左边必须匹配</td></tr><tr><td><code>(?&#x3C;!...)</code></td><td>负向后行</td><td>左边必须不匹配</td></tr></tbody></table>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：(?&#x3C;=￥)\d+        前面是「￥」的数字</span></span>
+<span class="line"><span>"￥100" => 匹配 "100"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：(?&#x3C;!\$)\d+        前面不是「$」的数字</span></span>
+<span class="line"><span>"$100 200" => 匹配 "200"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：(?&#x3C;=姓：)\S+       提取「姓：」后面的内容</span></span>
+<span class="line"><span>"姓名：张三 姓：李" => 匹配 "李"</span></span></code></pre>
+<blockquote>
+<p>后行断言在较新的浏览器和 Node 中已支持；部分老引擎（如 Safari 早期版本、Python 3.7 以前对变长后行有限制）可能不支持变长后行断言。</p>
+</blockquote>
+<h3 id="断言组合示例密码强度">断言组合示例：密码强度</h3>
+<p>要求「8 位以上，含大写、小写、数字」：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$</span></span></code></pre>
+<p>拆解：每个 <code>(?=...)</code> 都是从开头向右「扫一遍」检查是否包含某类字符，互不消耗位置，最后 <code>.{8,}</code> 限定总长度。</p>
+<hr>
+<h2 id="修饰符标志">修饰符（标志）</h2>
+<p>修饰符写在模式末尾，改变整体匹配行为。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>标志</th><th>含义</th><th>示例</th></tr></thead><tbody><tr><td><code>g</code></td><td>全局匹配（找出所有，而非第一个）</td><td><code>/a/g</code></td></tr><tr><td><code>i</code></td><td>忽略大小写</td><td><code>/cat/i</code> 匹配 <code>Cat</code></td></tr><tr><td><code>m</code></td><td>多行模式，<code>^</code>/<code>$</code> 匹配每行边界</td><td><code>/^\d/gm</code></td></tr><tr><td><code>s</code></td><td>dotAll，让 <code>.</code> 匹配换行符</td><td><code>/a.b/s</code></td></tr><tr><td><code>u</code></td><td>Unicode 模式，正确处理多字节字符</td><td><code>/\u{1F600}/u</code></td></tr><tr><td><code>y</code></td><td>粘性匹配，从 <code>lastIndex</code> 精确匹配</td><td>—</td></tr></tbody></table>
+<p>示例：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：/cat/gi     全局 + 忽略大小写</span></span>
+<span class="line"><span>"Cat cat CAT" => 匹配 "Cat"、"cat"、"CAT"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：/^\d/gm     多行模式下匹配每行开头的数字</span></span>
+<span class="line"><span>"1 a\n2 b\n3 c" => 匹配 "1"、"2"、"3"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：/a.b/s      dotAll，. 可跨行</span></span>
+<span class="line"><span>"a\nb" => ✅</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>模式：/^.$/u      正确匹配单个 emoji</span></span>
+<span class="line"><span>"😀" => ✅（不加 u 时 emoji 会被拆成两个码元，匹配失败）</span></span></code></pre>
+<hr>
+<h2 id="常用正则示例">常用正则示例</h2>
+<h3 id="邮箱">邮箱</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>^[\w.+-]+@[\w-]+(\.[\w-]+)+$</span></span>
+<span class="line"><span>"user@example.com"     => ✅</span></span>
+<span class="line"><span>"first.last+tag@sub.example.com" => ✅</span></span>
+<span class="line"><span>"no-at-sign"           => ❌</span></span>
+<span class="line"><span>"@example.com"         => ❌</span></span></code></pre>
+<blockquote>
+<p>这是实用级简化版本。完全符合 RFC 5322 的邮箱正则极其冗长，日常开发用上面的版本即可，最终仍需发送验证邮件确认。</p>
+</blockquote>
+<h3 id="手机号中国大陆">手机号（中国大陆）</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>^1[3-9]\d{9}$</span></span>
+<span class="line"><span>"13812345678" => ✅</span></span>
+<span class="line"><span>"12345678901" => ❌（第二位不在 3-9）</span></span>
+<span class="line"><span>"1381234567"  => ❌（位数不足）</span></span></code></pre>
+<h3 id="url">URL</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>^https?://[\w.-]+(:\d+)?(/[\w./?=&#x26;%-]*)?$</span></span>
+<span class="line"><span>"https://example.com"          => ✅</span></span>
+<span class="line"><span>"http://localhost:3000/api/v1" => ✅</span></span>
+<span class="line"><span>"ftp://example.com"            => ❌</span></span></code></pre>
+<h3 id="ipv4-地址">IPv4 地址</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$</span></span>
+<span class="line"><span>"192.168.1.1"   => ✅</span></span>
+<span class="line"><span>"255.255.255.0" => ✅</span></span>
+<span class="line"><span>"256.1.1.1"     => ❌（256 超出范围）</span></span>
+<span class="line"><span>"1.2.3"         => ❌（只有三段）</span></span></code></pre>
+<h3 id="日期-yyyy-mm-dd">日期 <code>YYYY-MM-DD</code></h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$</span></span>
+<span class="line"><span>"2026-07-17" => ✅</span></span>
+<span class="line"><span>"2026-13-01" => ❌（月份越界）</span></span>
+<span class="line"><span>"2026-07-32" => ❌（日期越界）</span></span></code></pre>
+<h3 id="中文字符">中文字符</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>[\u4e00-\u9fa5]+</span></span>
+<span class="line"><span>"hello世界" => 匹配 "世界"</span></span></code></pre>
+<h3 id="提取-html-标签内容">提取 HTML 标签内容</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>&#x3C;(\w+)[^>]*>(.*?)&#x3C;\/\1></span></span>
+<span class="line"><span>&#x3C;div class="x">hello&#x3C;/div> => 分组1="div", 分组2="hello"</span></span></code></pre>
+<h3 id="千分位格式化替换">千分位格式化（替换）</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：\B(?=(\d{3})+(?!\d))</span></span>
+<span class="line"><span>替换为：,</span></span>
+<span class="line"><span>"1234567890" => "1,234,567,890"</span></span></code></pre>
+<blockquote>
+<p>思路：在每个「后面恰好跟着若干组三位数字」的非边界位置插入逗号。这里巧妙组合了正向先行断言 <code>(?=...)</code> 和负向先行断言 <code>(?!...)</code>。</p>
+</blockquote>
+<h3 id="去除重复单词">去除重复单词</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>模式：\b(\w+)\s+\1\b</span></span>
+<span class="line"><span>替换为：$1</span></span>
+<span class="line"><span>"the the cat" => "the cat"</span></span></code></pre>
+<hr>
+<h2 id="不同语言中的用法">不同语言中的用法</h2>
+<h3 id="javascript">JavaScript</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">const</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> re</span><span style="color:#D73A49;--shiki-dark:#F47067"> =</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /(</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{4}</span><span style="color:#032F62;--shiki-dark:#96D0FF">)-(</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{2}</span><span style="color:#032F62;--shiki-dark:#96D0FF">)-(</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{2}</span><span style="color:#032F62;--shiki-dark:#96D0FF">)/</span><span style="color:#24292E;--shiki-dark:#ADBAC7">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">const</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> m</span><span style="color:#D73A49;--shiki-dark:#F47067"> =</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> re.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">exec</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#032F62;--shiki-dark:#96D0FF">'2026-07-17'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">);</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">console.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">log</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(m[</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="color:#24292E;--shiki-dark:#ADBAC7">]); </span><span style="color:#6A737D;--shiki-dark:#768390">// "2026-07-17" 整体匹配</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">console.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">log</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(m[</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="color:#24292E;--shiki-dark:#ADBAC7">]); </span><span style="color:#6A737D;--shiki-dark:#768390">// "2026" 分组1</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">// 替换</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">'2026-07-17'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">replace</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#032F62;--shiki-dark:#96D0FF">/(</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{4}</span><span style="color:#032F62;--shiki-dark:#96D0FF">)-(</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{2}</span><span style="color:#032F62;--shiki-dark:#96D0FF">)-(</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{2}</span><span style="color:#032F62;--shiki-dark:#96D0FF">)/</span><span style="color:#24292E;--shiki-dark:#ADBAC7">, </span><span style="color:#032F62;--shiki-dark:#96D0FF">'$3/$2/$1'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">);</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">// => "17/07/2026"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">// 命名分组</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">const</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> re2</span><span style="color:#D73A49;--shiki-dark:#F47067"> =</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /(?&#x3C;</span><span style="color:#24292E;--shiki-dark:#ADBAC7">year</span><span style="color:#032F62;--shiki-dark:#96D0FF">></span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{4}</span><span style="color:#032F62;--shiki-dark:#96D0FF">)-(?&#x3C;</span><span style="color:#24292E;--shiki-dark:#ADBAC7">month</span><span style="color:#032F62;--shiki-dark:#96D0FF">></span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{2}</span><span style="color:#032F62;--shiki-dark:#96D0FF">)/</span><span style="color:#24292E;--shiki-dark:#ADBAC7">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">const</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> m2</span><span style="color:#D73A49;--shiki-dark:#F47067"> =</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> re2.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">exec</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#032F62;--shiki-dark:#96D0FF">'2026-07'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">);</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">console.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">log</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(m2.groups.year); </span><span style="color:#6A737D;--shiki-dark:#768390">// "2026"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390">// 全局匹配</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">'1a2b3'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">match</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#032F62;--shiki-dark:#96D0FF">/</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#032F62;--shiki-dark:#96D0FF">/</span><span style="color:#D73A49;--shiki-dark:#F47067">g</span><span style="color:#24292E;--shiki-dark:#ADBAC7">); </span><span style="color:#6A737D;--shiki-dark:#768390">// ["1", "2", "3"]</span></span></code></pre>
+<h3 id="python">Python</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">import</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> re</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390"># 提取</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">m </span><span style="color:#D73A49;--shiki-dark:#F47067">=</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> re.search(</span><span style="color:#D73A49;--shiki-dark:#F47067">r</span><span style="color:#032F62;--shiki-dark:#96D0FF">'</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">(\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{4}</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">)</span><span style="color:#032F62;--shiki-dark:#96D0FF">-</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">(\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{2}</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">)</span><span style="color:#032F62;--shiki-dark:#96D0FF">-</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">(\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{2}</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">)</span><span style="color:#032F62;--shiki-dark:#96D0FF">'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">, </span><span style="color:#032F62;--shiki-dark:#96D0FF">'2026-07-17'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">print</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(m.group(</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="color:#24292E;--shiki-dark:#ADBAC7">))  </span><span style="color:#6A737D;--shiki-dark:#768390"># "2026"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390"># 命名分组（Python 用 (?P&#x3C;name>...)）</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">m2 </span><span style="color:#D73A49;--shiki-dark:#F47067">=</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> re.search(</span><span style="color:#D73A49;--shiki-dark:#F47067">r</span><span style="color:#032F62;--shiki-dark:#96D0FF">'</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">(</span><span style="color:#22863A;--shiki-dark:#8DDB8C">?P&#x3C;year></span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{4}</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">)</span><span style="color:#032F62;--shiki-dark:#96D0FF">-</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">(</span><span style="color:#22863A;--shiki-dark:#8DDB8C">?P&#x3C;month></span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{2}</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">)</span><span style="color:#032F62;--shiki-dark:#96D0FF">'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">, </span><span style="color:#032F62;--shiki-dark:#96D0FF">'2026-07'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">print</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(m2.group(</span><span style="color:#032F62;--shiki-dark:#96D0FF">'year'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">))  </span><span style="color:#6A737D;--shiki-dark:#768390"># "2026"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390"># 全部匹配</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">re.findall(</span><span style="color:#D73A49;--shiki-dark:#F47067">r</span><span style="color:#032F62;--shiki-dark:#96D0FF">'</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">\d</span><span style="color:#D73A49;--shiki-dark:#F47067">+</span><span style="color:#032F62;--shiki-dark:#96D0FF">'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">, </span><span style="color:#032F62;--shiki-dark:#96D0FF">'a1b22c333'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)  </span><span style="color:#6A737D;--shiki-dark:#768390"># ['1', '22', '333']</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390"># 替换</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">re.sub(</span><span style="color:#D73A49;--shiki-dark:#F47067">r</span><span style="color:#032F62;--shiki-dark:#96D0FF">'</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">(\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{4}</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">)</span><span style="color:#032F62;--shiki-dark:#96D0FF">-</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">(\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{2}</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">)</span><span style="color:#032F62;--shiki-dark:#96D0FF">-</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">(\d</span><span style="color:#D73A49;--shiki-dark:#F47067">{2}</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">)</span><span style="color:#032F62;--shiki-dark:#96D0FF">'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">, </span><span style="color:#D73A49;--shiki-dark:#F47067">r</span><span style="color:#032F62;--shiki-dark:#96D0FF">'</span><span style="color:#22863A;--shiki-dark:#8DDB8C">\3</span><span style="color:#032F62;--shiki-dark:#96D0FF">/</span><span style="color:#22863A;--shiki-dark:#8DDB8C">\2</span><span style="color:#032F62;--shiki-dark:#96D0FF">/</span><span style="color:#22863A;--shiki-dark:#8DDB8C">\1</span><span style="color:#032F62;--shiki-dark:#96D0FF">'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">, </span><span style="color:#032F62;--shiki-dark:#96D0FF">'2026-07-17'</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#768390"># => "17/07/2026"</span></span></code></pre>
+<blockquote>
+<p>注意：JavaScript 用 <code>$1</code> 引用分组，Python 用 <code>\1</code>（替换字符串中两者都接受数字引用，但写法习惯不同）。</p>
+</blockquote>
+<h3 id="java--rust-速览">Java / Rust 速览</h3>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="java"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#768390">// Java</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">Pattern</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> p</span><span style="color:#D73A49;--shiki-dark:#F47067"> =</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> Pattern.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">compile</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#032F62;--shiki-dark:#96D0FF">"</span><span style="color:#005CC5;--shiki-dark:#F47067">\\</span><span style="color:#032F62;--shiki-dark:#96D0FF">d{4}-</span><span style="color:#005CC5;--shiki-dark:#F47067">\\</span><span style="color:#032F62;--shiki-dark:#96D0FF">d{2}-</span><span style="color:#005CC5;--shiki-dark:#F47067">\\</span><span style="color:#032F62;--shiki-dark:#96D0FF">d{2}"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">);</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">Matcher</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> m</span><span style="color:#D73A49;--shiki-dark:#F47067"> =</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> p.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">matcher</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#032F62;--shiki-dark:#96D0FF">"2026-07-17"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">);</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">boolean</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> found</span><span style="color:#D73A49;--shiki-dark:#F47067"> =</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> m.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">find</span><span style="color:#24292E;--shiki-dark:#ADBAC7">();</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="rust"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#768390">// Rust (regex crate)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">use</span><span style="color:#6F42C1;--shiki-dark:#F69D50"> regex</span><span style="color:#D73A49;--shiki-dark:#F47067">::</span><span style="color:#6F42C1;--shiki-dark:#F69D50">Regex</span><span style="color:#24292E;--shiki-dark:#ADBAC7">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">let</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> re </span><span style="color:#D73A49;--shiki-dark:#F47067">=</span><span style="color:#6F42C1;--shiki-dark:#F69D50"> Regex</span><span style="color:#D73A49;--shiki-dark:#F47067">::</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">new</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#032F62;--shiki-dark:#96D0FF">r"\d{4}-\d{2}-\d{2}"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span><span style="color:#D73A49;--shiki-dark:#F47067">?</span><span style="color:#24292E;--shiki-dark:#ADBAC7">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">let</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> m </span><span style="color:#D73A49;--shiki-dark:#F47067">=</span><span style="color:#24292E;--shiki-dark:#ADBAC7"> re</span><span style="color:#D73A49;--shiki-dark:#F47067">.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">find</span><span style="color:#24292E;--shiki-dark:#ADBAC7">(</span><span style="color:#032F62;--shiki-dark:#96D0FF">"2026-07-17"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">)</span><span style="color:#D73A49;--shiki-dark:#F47067">.</span><span style="color:#6F42C1;--shiki-dark:#DCBDFB">unwrap</span><span style="color:#24292E;--shiki-dark:#ADBAC7">();</span></span></code></pre>
+<blockquote>
+<p>Java、Rust 字符串字面量中 <code>\</code> 需写成 <code>\\</code>，所以正则里的 <code>\d</code> 在源码里是 <code>\\d</code>。JavaScript 正则字面量 <code>/.../ </code> 和 Python 原始字符串 <code>r"..."</code> 则无需双重转义。</p>
+</blockquote>
+<hr>
+<h2 id="常见陷阱与技巧">常见陷阱与技巧</h2>
+<ul>
+<li><strong>贪婪导致过度匹配</strong>：解析 HTML 时 <code>&#x3C;.*></code> 会从第一个 <code>&#x3C;</code> 一直吃到最后一个 <code>></code>，应改用 <code>&#x3C;.*?></code> 或更严谨的字符类 <code>&#x3C;[^>]*></code>。</li>
+<li><strong>忘记锚定边界</strong>：用 <code>\d+</code> 校验「纯数字」会放过 <code>"abc123"</code>，应写成 <code>^\d+$</code>。</li>
+<li><strong><code>.</code> 不匹配换行</strong>：跨行提取时记得加 <code>s</code> 标志，或改用 <code>[\s\S]</code>。</li>
+<li><strong>字符类里的 <code>-</code></strong>：<code>[a-z]</code> 是范围，但 <code>[-a]</code> 或 <code>[a-]</code> 里的 <code>-</code> 在边缘位置就是字面横杠。</li>
+<li><strong>优先用非捕获分组</strong>：不需要引用的分组用 <code>(?:...)</code>，既省内存又不打乱分组编号。</li>
+<li><strong>能用字符串方法就别用正则</strong>：判断固定前缀用 <code>startsWith</code>，简单包含用 <code>includes</code>，正则留给它真正擅长的模式匹配。</li>
+<li><strong>避免灾难性回溯</strong>：形如 <code>(a+)+</code> 的嵌套量词在输入不匹配时会指数级回溯，可用占有量词或拆分模式规避。</li>
+<li><strong>先测试再上线</strong>：善用 <a href="https://regex101.com">regex101</a>、<a href="https://www.debuggex.com">debuggex</a> 等工具可视化调试，并补充边界用例。</li>
+</ul>
+<hr>
+<h2 id="速查表">速查表</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>语法</th><th>含义</th></tr></thead><tbody><tr><td><code>.</code></td><td>任意字符（除换行）</td></tr><tr><td><code>\d</code> <code>\w</code> <code>\s</code></td><td>数字 / 单词字符 / 空白</td></tr><tr><td><code>\D</code> <code>\W</code> <code>\S</code></td><td>上述取反</td></tr><tr><td><code>[abc]</code> <code>[^abc]</code></td><td>字符类 / 取反</td></tr><tr><td><code>[a-z]</code></td><td>范围</td></tr><tr><td><code>*</code> <code>+</code> <code>?</code></td><td>0+ / 1+ / 0或1</td></tr><tr><td><code>{n}</code> <code>{n,}</code> <code>{n,m}</code></td><td>精确 / 至少 / 范围</td></tr><tr><td><code>*?</code> <code>+?</code> <code>??</code></td><td>非贪婪</td></tr><tr><td><code>^</code> <code>$</code></td><td>开头 / 结尾</td></tr><tr><td><code>\b</code> <code>\B</code></td><td>单词边界 / 非边界</td></tr><tr><td><code>(...)</code> <code>(?:...)</code></td><td>捕获 / 非捕获分组</td></tr><tr><td><code>(?&#x3C;n>...)</code></td><td>命名分组</td></tr><tr><td><code>\1</code></td><td>反向引用</td></tr><tr><td>`a</td><td>b`</td></tr><tr><td><code>(?=...)</code> <code>(?!...)</code></td><td>正向 / 负向先行断言</td></tr><tr><td><code>(?&#x3C;=...)</code> <code>(?&#x3C;!...)</code></td><td>正向 / 负向后行断言</td></tr><tr><td><code>g i m s u</code></td><td>全局 / 忽略大小写 / 多行 / dotAll / Unicode</td></tr></tbody></table>
+<hr>
+<h2 id="总结">总结</h2>
+<p>正则表达式是一门「小而强」的模式语言，核心其实就四件事：<strong>字符类</strong>描述「匹配什么」，<strong>量词</strong>描述「匹配多少次」，<strong>分组与断言</strong>描述「如何组合与定位」，<strong>标志位</strong>描述「如何匹配」。</p>
+<p>掌握这套语法后，90% 的文本处理场景都能从容应对。剩下的难点往往不在语法，而在<strong>把现实问题准确翻译成模式</strong>——这需要多练、多拆解、多用工具验证。建议从本文的常用示例出发，结合 regex101 逐步改造成自己业务需要的版本。</p>  </article> <nav class="mt-12 grid grid-cols-2 gap-4 border-t border-border pt-6 dark:border-border-dark"> <div></div> <a href="/blog/2026-06-04-astro-blog-migration" class="group text-right"> <span class="text-xs text-muted dark:text-muted-dark"><span data-i18n="post.nextPost">下一篇</span> &rarr;</span> <p class="mt-1 text-sm text-text group-hover:text-primary dark:text-text-dark">博客迁移至 Astro：从零搭建现代化个人站点</p> </a> </nav> <div class="giscus mt-12 border-t border-border pt-8 dark:border-border-dark"></div> <script type="module">const i=document.querySelector(".giscus");let n=!1;const a=new IntersectionObserver(s=>{if(s[0].isIntersecting&&!n){n=!0,a.disconnect();const e=document.documentElement.classList.contains("dark")?"dark_dimmed":"light",t=document.createElement("script");t.src="https://giscus.app/client.js",t.setAttribute("data-repo","ccnuu/ccnuu.github.io"),t.setAttribute("data-repo-id","R_kgDOJ7X2tw"),t.setAttribute("data-category","Announcements"),t.setAttribute("data-category-id","DIC_kwDOJ7X2t84CjXsS"),t.setAttribute("data-mapping","pathname"),t.setAttribute("data-reactions-enabled","1"),t.setAttribute("data-emit-metadata","0"),t.setAttribute("data-input-position","top"),t.setAttribute("data-theme",e),t.setAttribute("data-lang","zh-CN"),t.setAttribute("crossorigin","anonymous"),i.appendChild(t)}});a.observe(i);new MutationObserver(()=>{const s=document.documentElement.classList.contains("dark")?"dark_dimmed":"light",e=document.querySelector(".giscus iframe");e?.contentWindow&&e.contentWindow.postMessage({giscus:{setConfig:{theme:s}}},"https://giscus.app")}).observe(document.documentElement,{attributes:!0,attributeFilter:["class"]});</script>  </main> </div> <!-- 桌面端：固定右侧 --><div id="scroll-buttons" class="pointer-events-none fixed inset-0 z-30 hidden lg:block"> <div class="absolute bottom-28" style="right: calc(50% - 384px - 42px)"> <div class="pointer-events-auto flex flex-col gap-2"> <button id="scroll-back" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="返回上一页" data-i18n-aria="scroll.back"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M15 18l-6-6 6-6"></path> </svg> </button> <button id="scroll-top" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="回到顶部" data-i18n-aria="scroll.top"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M18 15l-6-6-6 6"></path> </svg> </button> <button id="scroll-bottom" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="跳到底部" data-i18n-aria="scroll.bottom"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M6 9l6 6 6-6"></path> </svg> </button> </div> </div> </div> <!-- 手机端：右下角固定，footer 上方 --> <div id="scroll-buttons-mobile" class="pointer-events-none fixed inset-0 z-30 lg:hidden"> <div class="absolute right-4 bottom-28"> <div class="pointer-events-auto flex flex-col gap-2"> <button id="toc-btn-m" type="button" class="hidden h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="目录" data-i18n-aria="scroll.toc"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M4 6h16M4 12h10M4 18h16"></path> </svg> </button> <button id="scroll-back-m" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="返回上一页" data-i18n-aria="scroll.back"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M15 18l-6-6 6-6"></path> </svg> </button> <button id="scroll-top-m" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="回到顶部" data-i18n-aria="scroll.top"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M18 15l-6-6-6 6"></path> </svg> </button> <button id="scroll-bottom-m" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="跳到底部" data-i18n-aria="scroll.bottom"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M6 9l6 6 6-6"></path> </svg> </button> </div> </div> </div> <script type="module">(function(){var e=document.querySelector(".flex-1.overflow-y-auto");if(!e)return;document.getElementById("scroll-buttons"),document.getElementById("scroll-buttons-mobile");var n=document.getElementById("scroll-top"),o=document.getElementById("scroll-bottom"),r=document.getElementById("scroll-back"),c=document.getElementById("scroll-top-m"),l=document.getElementById("scroll-bottom-m"),d=document.getElementById("scroll-back-m");function s(){var t=e.scrollHeight>e.clientHeight;n&&(n.style.display=t?"":"none"),o&&(o.style.display=t?"":"none"),c&&(c.style.display=t?"":"none"),l&&(l.style.display=t?"":"none")}s(),window.addEventListener("resize",s);function i(t){e.scrollTo({top:t,behavior:"smooth"})}r&&r.addEventListener("click",function(){history.back()}),n&&n.addEventListener("click",function(){i(0)}),o&&o.addEventListener("click",function(){i(e.scrollHeight)}),d&&d.addEventListener("click",function(){history.back()}),c&&c.addEventListener("click",function(){i(0)}),l&&l.addEventListener("click",function(){i(e.scrollHeight)})})();</script> </div> <div class="pointer-events-none fixed inset-0 z-30 hidden lg:block"> <div class="absolute top-24" style="left: calc(50% - 384px - 224px - 48px)"> <div class="pointer-events-auto w-56 space-y-4"> <aside> <div class="space-y-4 glass-card p-5"> <div class="flex flex-col items-center text-center"> <a href="/"> <img src="/favicon.svg" alt="avatar" class="mb-3 h-20 w-20 rounded-full border-2 border-border transition-opacity hover:opacity-80 dark:border-border-dark"> </a> <a href="/" class="text-lg font-semibold text-text hover:text-primary dark:text-text-dark"> ccnuu </a> <p class="mt-1 text-xs text-muted dark:text-muted-dark">  </p> </div> <hr class="border-border dark:border-border-dark"> <div class="space-y-2 text-sm"> <a href="https://github.com/ccnuu" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark"> <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"> <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"></path> </svg>
+GitHub
+</a> <a href="mailto:cy.arctique@gmail.com" class="flex items-center gap-2 text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark"> <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"></path> </svg>
+Email
+</a> </div> </div> </aside> <a href="https://github.com/ccnuu" target="_blank" rel="noopener noreferrer" class="glass-card block overflow-hidden transition-shadow hover:shadow-lg"> <img src="https://ghchart.rshah.org/ccnuu" alt="GitHub contributions" class="w-full h-auto" loading="lazy"> </a> </div> </div> </div> <footer class="shrink-0 glass py-6"> <div class="mx-auto max-w-3xl px-4 text-center text-sm text-muted dark:text-muted-dark"> <p>&copy; 2026 ccnuu. Built with <a href="https://astro.build" class="underline transition-opacity active:opacity-60 hover:text-text dark:hover:text-text-dark" rel="noopener noreferrer">Astro</a>.</p> <p class="mt-1"> <span data-i18n="footer.running">博客已运行</span> <span id="runtime" data-start="2023-07-14T00:00:00.000Z">—</span> </p> </div> </footer> <script type="module">const e=document.getElementById("runtime"),a=new Date(e.dataset.start);function n(){const t=Math.floor((new Date().getTime()-a.getTime())/(1e3*60*60*24)),o=document.documentElement.lang||"zh";e.textContent=o==="zh"?`${t} 天`:`${t} days`}n();setInterval(n,6e4);</script> <div id="search-modal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true"> <div class="mx-auto mt-[15vh] max-w-xl px-4"> <div class="glass-strong rounded-xl p-4 shadow-2xl"> <div id="search-input-container"></div> <div id="search-results" class="max-h-[50vh] space-y-2 overflow-y-auto empty:hidden"></div> <p id="search-empty" class="hidden py-8 text-center text-sm text-muted dark:text-muted-dark"></p> </div> </div> </div> <script type="module">const d=document.getElementById("search-modal"),m=document.getElementById("search-input-container"),a=document.getElementById("search-results"),r=document.getElementById("search-empty"),p=document.documentElement.lang||"zh",o=p==="zh",t=document.createElement("input");t.id="search-input";t.type="text";t.placeholder=o?"搜索文章...":"Search articles...";t.className="mb-3 w-full rounded-lg border border-border bg-transparent px-4 py-3 text-text outline-none focus:border-primary dark:border-border-dark dark:text-text-dark";m.appendChild(t);r.textContent=o?"无结果":"No results";d.addEventListener("click",e=>{e.target===d&&(d.classList.add("hidden"),t.value="",a.innerHTML="",r.classList.add("hidden"))});document.addEventListener("keydown",e=>{e.key==="Escape"&&(d.classList.add("hidden"),t.value="",a.innerHTML="",r.classList.add("hidden")),(e.ctrlKey||e.metaKey)&&e.key==="k"&&(e.preventDefault(),d.classList.remove("hidden"),setTimeout(()=>t.focus(),100))});let l;t.addEventListener("input",()=>{clearTimeout(l),l=setTimeout(async()=>{const e=t.value.trim();if(!e){a.innerHTML="",r.classList.add("hidden");return}try{const i=await window.__pagefindSearch?.();if(!i)return;const s=await i.search(e);if(!s||!s.results.length){a.innerHTML="",r.classList.remove("hidden");return}r.classList.add("hidden");const u=await Promise.all(s.results.slice(0,8).map(async n=>{const c=await n.data();return{url:c.url,title:c.meta?.title??n.id,excerpt:c.excerpt}}));a.innerHTML=u.map(n=>`
+            <a href="${n.url}" class="block rounded-lg p-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
+              <p class="text-sm font-medium text-text dark:text-text-dark">${n.title}</p>
+              <p class="mt-1 text-xs text-muted dark:text-muted-dark line-clamp-2">${n.excerpt}</p>
+            </a>
+          `).join("")}catch{a.innerHTML=""}},200)});</script> <script>
+  let pagefindReady = null;
+  window.__pagefindSearch = function () {
+    if (!pagefindReady) {
+      pagefindReady = import('/pagefind/pagefind.js')
+        .then(async (m) => { await m.init(); return m; })
+        .catch(() => null);
+    }
+    return pagefindReady;
+  };
+</script> <script>
+      document.querySelectorAll('.theme-toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var cur = localStorage.getItem('theme') || 'dark';
+          var next = cur === 'dark' ? 'light' : 'dark';
+          localStorage.setItem('theme', next);
+          var d = document.documentElement;
+          if (next === 'dark') { d.classList.add('dark'); }
+          else { d.classList.remove('dark'); }
+        });
+      });
+    </script> <!-- client-side i18n --> <script>
+      (function() {
+        var en = window.__i18n_en;
+        if (!en) return;
+        function t(key) {
+          var keys = key.split('.'), v = en;
+          for (var i = 0; i < keys.length; i++) { if (!v) return key; v = v[keys[i]]; }
+          return typeof v === 'string' ? v : key;
+        }
+        function swap() {
+          document.querySelectorAll('[data-i18n]').forEach(function(el) {
+            el.textContent = t(el.getAttribute('data-i18n'));
+          });
+          document.querySelectorAll('[data-i18n-aria]').forEach(function(el) {
+            el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
+          });
+          document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
+            el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph')));
+          });
+        }
+        // Run after full DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', swap);
+        } else {
+          swap();
+        }
+      })();
+    </script> </body> </html>  <script type="module">document.querySelectorAll("article pre").forEach(e=>{const t=document.createElement("button");t.className="copy-btn",t.innerHTML=`
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="9" y="9" width="13" height="13" rx="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+      </svg>`,t.addEventListener("click",async o=>{o.stopPropagation();const i=e.querySelector("code")?.textContent??e.textContent??"";await navigator.clipboard.writeText(i),t.classList.add("copied"),t.innerHTML=`
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>`,setTimeout(()=>{t.classList.remove("copied"),t.innerHTML=`
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>`},2e3)}),e.appendChild(t)});</script> <!-- 桌面端：固定右侧 TOC --> <div class="pointer-events-none fixed inset-0 z-30 hidden lg:block"> <div class="absolute top-24 bottom-28 overflow-y-auto pointer-events-auto w-48" style="right: calc(50% - 384px - 192px - 48px)"> <nav><h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-muted dark:text-muted-dark" data-i18n="post.toc">目录</h2><ul class="space-y-1 border-l border-border dark:border-border-dark"><li><a href="#什么是正则表达式" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">什么是正则表达式</a></li><li><a href="#基础语法" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">基础语法</a></li><li><a href="#字面量字符" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">字面量字符</a></li><li><a href="#元字符" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">元字符</a></li><li><a href="#点号--与通配" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">点号 . 与通配</a></li><li><a href="#字符类" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">字符类</a></li><li><a href="#基本字符类-" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">基本字符类 [...]</a></li><li><a href="#范围" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">范围</a></li><li><a href="#取反字符类-" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">取反字符类 [^...]</a></li><li><a href="#预定义字符类" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">预定义字符类</a></li><li><a href="#其他特殊转义" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">其他特殊转义</a></li><li><a href="#量词" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">量词</a></li><li><a href="#贪婪与非贪婪" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">贪婪与非贪婪</a></li><li><a href="#边界与锚点" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">边界与锚点</a></li><li><a href="#-与-" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">^ 与 $</a></li><li><a href="#单词边界-b" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">单词边界 \b</a></li><li><a href="#分组与捕获" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">分组与捕获</a></li><li><a href="#捕获分组-" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">捕获分组 (...)</a></li><li><a href="#非捕获分组-" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">非捕获分组 (?:...)</a></li><li><a href="#命名分组-name" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">命名分组 (?&lt;name&gt;...)</a></li><li><a href="#反向引用-1" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">反向引用 \1</a></li><li><a href="#选择分支" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">选择（分支）</a></li><li><a href="#转义" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">转义</a></li><li><a href="#断言lookaround" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">断言（Lookaround）</a></li><li><a href="#先行断言lookahead" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">先行断言（Lookahead）</a></li><li><a href="#后行断言lookbehind" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">后行断言（Lookbehind）</a></li><li><a href="#断言组合示例密码强度" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">断言组合示例：密码强度</a></li><li><a href="#修饰符标志" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">修饰符（标志）</a></li><li><a href="#常用正则示例" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">常用正则示例</a></li><li><a href="#邮箱" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">邮箱</a></li><li><a href="#手机号中国大陆" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">手机号（中国大陆）</a></li><li><a href="#url" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">URL</a></li><li><a href="#ipv4-地址" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">IPv4 地址</a></li><li><a href="#日期-yyyy-mm-dd" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">日期 YYYY-MM-DD</a></li><li><a href="#中文字符" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">中文字符</a></li><li><a href="#提取-html-标签内容" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">提取 HTML 标签内容</a></li><li><a href="#千分位格式化替换" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">千分位格式化（替换）</a></li><li><a href="#去除重复单词" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">去除重复单词</a></li><li><a href="#不同语言中的用法" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">不同语言中的用法</a></li><li><a href="#javascript" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">JavaScript</a></li><li><a href="#python" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Python</a></li><li><a href="#java--rust-速览" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Java / Rust 速览</a></li><li><a href="#常见陷阱与技巧" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">常见陷阱与技巧</a></li><li><a href="#速查表" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">速查表</a></li><li><a href="#总结" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">总结</a></li></ul></nav> </div> </div> <!-- 手机端：浮动 TOC 按钮 -->  <div id="toc-mobile-overlay" class="fixed inset-0 z-40 hidden bg-black/50 lg:hidden" role="dialog"> <div class="absolute right-4 top-1/2 -translate-y-1/2 w-64 max-h-[80vh] rounded-lg glass-strong p-6 shadow-2xl flex flex-col"> <div class="flex items-center justify-between mb-4 shrink-0"> <h3 class="font-semibold text-text dark:text-text-dark" data-i18n="post.toc">目录</h3> <button id="toc-mobile-close" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark"> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M18 6L6 18M6 6l12 12"></path> </svg> </button> </div> <div class="overflow-y-auto flex-1 min-h-0"> <nav><ul class="space-y-1 border-l border-border dark:border-border-dark"><li><a href="#什么是正则表达式" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">什么是正则表达式</a></li><li><a href="#基础语法" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">基础语法</a></li><li><a href="#字面量字符" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">字面量字符</a></li><li><a href="#元字符" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">元字符</a></li><li><a href="#点号--与通配" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">点号 . 与通配</a></li><li><a href="#字符类" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">字符类</a></li><li><a href="#基本字符类-" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">基本字符类 [...]</a></li><li><a href="#范围" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">范围</a></li><li><a href="#取反字符类-" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">取反字符类 [^...]</a></li><li><a href="#预定义字符类" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">预定义字符类</a></li><li><a href="#其他特殊转义" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">其他特殊转义</a></li><li><a href="#量词" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">量词</a></li><li><a href="#贪婪与非贪婪" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">贪婪与非贪婪</a></li><li><a href="#边界与锚点" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">边界与锚点</a></li><li><a href="#-与-" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">^ 与 $</a></li><li><a href="#单词边界-b" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">单词边界 \b</a></li><li><a href="#分组与捕获" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">分组与捕获</a></li><li><a href="#捕获分组-" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">捕获分组 (...)</a></li><li><a href="#非捕获分组-" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">非捕获分组 (?:...)</a></li><li><a href="#命名分组-name" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">命名分组 (?&lt;name&gt;...)</a></li><li><a href="#反向引用-1" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">反向引用 \1</a></li><li><a href="#选择分支" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">选择（分支）</a></li><li><a href="#转义" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">转义</a></li><li><a href="#断言lookaround" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">断言（Lookaround）</a></li><li><a href="#先行断言lookahead" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">先行断言（Lookahead）</a></li><li><a href="#后行断言lookbehind" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">后行断言（Lookbehind）</a></li><li><a href="#断言组合示例密码强度" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">断言组合示例：密码强度</a></li><li><a href="#修饰符标志" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">修饰符（标志）</a></li><li><a href="#常用正则示例" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">常用正则示例</a></li><li><a href="#邮箱" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">邮箱</a></li><li><a href="#手机号中国大陆" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">手机号（中国大陆）</a></li><li><a href="#url" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">URL</a></li><li><a href="#ipv4-地址" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">IPv4 地址</a></li><li><a href="#日期-yyyy-mm-dd" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">日期 YYYY-MM-DD</a></li><li><a href="#中文字符" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">中文字符</a></li><li><a href="#提取-html-标签内容" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">提取 HTML 标签内容</a></li><li><a href="#千分位格式化替换" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">千分位格式化（替换）</a></li><li><a href="#去除重复单词" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">去除重复单词</a></li><li><a href="#不同语言中的用法" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">不同语言中的用法</a></li><li><a href="#javascript" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">JavaScript</a></li><li><a href="#python" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Python</a></li><li><a href="#java--rust-速览" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Java / Rust 速览</a></li><li><a href="#常见陷阱与技巧" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">常见陷阱与技巧</a></li><li><a href="#速查表" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">速查表</a></li><li><a href="#总结" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">总结</a></li></ul></nav> </div> </div> </div>  <script type="module">const t=document.getElementById("toc-btn-m"),e=document.getElementById("toc-mobile-overlay"),d=document.getElementById("toc-mobile-close");t&&e&&d&&(t.classList.remove("hidden"),t.classList.add("flex"),t.addEventListener("click",()=>e.classList.remove("hidden")),d.addEventListener("click",()=>e.classList.add("hidden")),e.addEventListener("click",c=>{c.target===e&&e.classList.add("hidden")}));</script>
