@@ -1,0 +1,371 @@
+<!DOCTYPE html><html lang="zh"> <head><script>
+      (function(){
+        // theme
+        var d = document.documentElement;
+        var t = localStorage.getItem('theme') || 'dark';
+        if (t === 'dark') d.classList.add('dark');
+        else d.classList.remove('dark');
+        // language
+        var lang = localStorage.getItem('lang') || 'zh';
+        d.lang = lang;
+        // i18n swap - run before body renders to avoid flash
+        if (lang !== 'zh') {
+          var en={"nav":{"archive":"Archive","tags":"Tags","about":"About","links":"Links","search":"Search articles...","menu":"Menu"},"pagination":{"prev":"Previous","next":"Next"},"post":{"publishedOn":"Published on","updatedOn":"Updated on","words":"words","prevPost":"Previous post","nextPost":"Next post","toc":"Table of Contents"},"footer":{"running":"Blog running for"},"scroll":{"top":"Back to top","bottom":"Scroll to bottom","toc":"Table of Contents","back":"Go back"},"theme":{"toggle":"Toggle theme"},"notFound":{"title":"Page Not Found","message":"Sorry, this page does not exist.","back":"Back to Home"},"about":{"title":"About"},"links":{"title":"Links"},"tags":{"title":"Tags","articles":"articles"},"blog":{"archive":"Archive","page":"Page","page2":""},"searchModal":{"noResults":"No results"},"lang":{"label":"Language"}};
+          window.__i18n_en = en;
+        }
+      })();
+    </script><meta charset="utf-8"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" href="/favicon.ico"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="Astro v6.4.3"><title>C3 交叉编译 AArch64 | ccnuu blog</title><meta name="description" content="在 Linux、Windows 或 WSL 上为 ARM64 Linux 构建 C3 程序，重点处理 sysroot、启动文件与 glibc 版本匹配。"><!-- Open Graph --><meta property="og:title" content="C3 交叉编译 AArch64 | ccnuu blog"><meta property="og:description" content="在 Linux、Windows 或 WSL 上为 ARM64 Linux 构建 C3 程序，重点处理 sysroot、启动文件与 glibc 版本匹配。"><meta property="og:image" content="https://ccnuu.github.io/og-default.png"><meta property="og:url" content="https://ccnuu.github.io/blog/2026-10-28-c3-aarch64/"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><!-- Canonical --><link rel="canonical" href="https://ccnuu.github.io/blog/2026-10-28-c3-aarch64/"><!-- RSS --><link rel="alternate" type="application/rss+xml" title="ccnuu blog" href="/rss.xml"><style>article pre{position:relative}article pre .copy-btn{position:absolute;top:.5rem;right:.5rem;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:.25rem;border:1px solid #334155;background:#1e293b;color:#94a3b8;cursor:pointer;opacity:0;transition:opacity .15s;z-index:10}article pre:hover .copy-btn{opacity:1}article pre .copy-btn:hover{color:#e2e8f0;border-color:#475569}article pre .copy-btn.copied{color:#4ade80;border-color:#4ade80}
+</style>
+<link rel="stylesheet" href="/_astro/BaseLayout.Bl6AYgRR.css"></head> <body class="flex h-dvh flex-col overflow-hidden text-text antialiased dark:text-text-dark"> <header class="z-50 shrink-0 glass-strong"> <nav class="mx-auto flex max-w-3xl items-center px-6 py-3"> <!-- 仅手机端：头像 + 昵称 --> <a href="/" class="flex items-center gap-2.5 text-lg font-bold text-text hover:text-primary dark:text-text-dark md:hidden"> <img src="/favicon.svg" alt="logo" class="h-8 w-8 rounded-full"> <span>ccnuu</span> </a> <!-- 桌面端导航：左 链接 / 右 功能按钮 --> <div class="hidden w-full items-center md:flex"> <div class="flex items-center gap-6"> <a href="/blog" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.archive">归档</a> <a href="/tags" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.tags">标签</a> <a href="/about" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.about">关于</a> <a href="/links" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.links">友链</a> </div> <div class="ml-auto flex items-center gap-3"> <a href="/rss.xml" target="_blank" class="rounded p-1.5 text-muted transition-transform active:scale-90 hover:text-[#f97316] dark:text-muted-dark dark:hover:text-[#fb923c]" title="RSS" aria-label="RSS"> <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"> <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93v-2.83z"></path> </svg> </a> <button type="button" class="search-toggle-btn text-muted transition-transform active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="搜索"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <circle cx="11" cy="11" r="8"></circle> <path d="M21 21l-4.35-4.35"></path> </svg> </button> <script type="module">document.querySelectorAll(".search-toggle-btn").forEach(e=>{e.addEventListener("click",()=>{document.getElementById("search-modal").classList.remove("hidden"),setTimeout(()=>{document.getElementById("search-input")?.focus()},100)})});</script> <button type="button" class="theme-toggle-btn rounded p-1.5 text-muted transition-transform active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="切换主题" data-i18n-aria="theme.toggle"> <span class="block h-5 w-5 dark:hidden"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"></path> </svg> </span> <span class="hidden h-5 w-5 dark:block"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"></path> </svg> </span> </button> <button id="lang-switch" type="button" class="text-xs font-medium text-muted transition-opacity active:opacity-60 hover:text-primary dark:text-muted-dark dark:hover:text-blue-400" title="Language">EN</button> </div> </div> <!-- 手机端：头像 + 功能按钮 --> <div class="ml-auto flex items-center gap-3 md:hidden"> <a href="/rss.xml" target="_blank" class="rounded p-1.5 text-muted transition-transform active:scale-90 hover:text-[#f97316] dark:text-muted-dark dark:hover:text-[#fb923c]" title="RSS" aria-label="RSS"> <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"> <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93v-2.83z"></path> </svg> </a> <button type="button" class="search-toggle-btn text-muted transition-transform active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="搜索"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <circle cx="11" cy="11" r="8"></circle> <path d="M21 21l-4.35-4.35"></path> </svg> </button>  <button type="button" class="theme-toggle-btn rounded p-1.5 text-muted transition-transform active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="切换主题" data-i18n-aria="theme.toggle"> <span class="block h-5 w-5 dark:hidden"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"></path> </svg> </span> <span class="hidden h-5 w-5 dark:block"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"></path> </svg> </span> </button> <button id="lang-switch-m" type="button" class="text-xs font-medium text-muted transition-opacity active:opacity-60 hover:text-primary dark:text-muted-dark dark:hover:text-blue-400" title="Language">EN</button> <button id="mobile-menu-btn" type="button" class="text-muted transition-transform active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="菜单" data-i18n-aria="nav.menu" onclick="var m=document.getElementById('mobile-menu');m.style.display=m.style.display==='none'?'block':'none';event.stopPropagation();"> <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M4 6h16M4 12h16M4 18h16"></path> </svg> </button> </div> </nav> <!-- 手机端覆盖菜单 --> <div id="mobile-menu" class="fixed inset-x-0 top-[53px] z-40 glass-strong px-6 pb-6 pt-4 shadow-lg md:hidden" style="display:none" onclick="event.stopPropagation()"> <div class="flex flex-col items-center gap-4 text-base"> <a href="/blog" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.archive">归档</a> <a href="/tags" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.tags">标签</a> <a href="/about" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.about">关于</a> <a href="/links" class="text-muted transition-opacity active:opacity-60 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" data-i18n="nav.links">友链</a> </div> </div> </header> <script>
+  var mobileMenu = document.getElementById('mobile-menu');
+  document.addEventListener('click', function () {
+    if (mobileMenu && mobileMenu.style.display !== 'none') {
+      mobileMenu.style.display = 'none';
+    }
+  });
+  var mq = window.matchMedia('(min-width: 768px)');
+  mq.addEventListener('change', function () {
+    if (mq.matches && mobileMenu && mobileMenu.style.display !== 'none') {
+      mobileMenu.style.display = 'none';
+    }
+  });
+
+  // Language switcher
+  (function(){
+    var lang = localStorage.getItem('lang') || 'zh';
+    var btns = [document.getElementById('lang-switch'), document.getElementById('lang-switch-m')];
+    btns.forEach(function(btn){
+      if (!btn) return;
+      btn.textContent = lang === 'zh' ? 'EN' : '中文';
+      btn.addEventListener('click', function(){
+        var next = lang === 'zh' ? 'en' : 'zh';
+        localStorage.setItem('lang', next);
+        location.reload();
+      });
+    });
+  })();
+</script> <div class="flex-1 overflow-y-auto"> <div class="relative mx-auto max-w-3xl px-4 py-8"> <main class="glass-card p-6 sm:p-8">  <article class="prose max-w-none"> <header class="mb-8"> <h1 class="mb-4 text-3xl font-bold text-text dark:text-text-dark"> C3 交叉编译 AArch64 </h1> <div class="flex flex-wrap items-center gap-4 text-sm text-muted dark:text-muted-dark"> <time datetime="2026-10-28T00:00:00.000Z"> <span data-i18n="post.publishedOn">发布于</span> 2026年10月28日 </time>  <span>· 9594 <span data-i18n="post.words">字</span></span> </div> <div class="mt-4 flex flex-wrap gap-2"> <a href="/tags/C3" class="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-muted transition-colors active:opacity-70 hover:bg-primary hover:text-white dark:bg-gray-800 dark:text-muted-dark dark:hover:bg-primary">
+# C3 </a><a href="/tags/交叉编译" class="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-muted transition-colors active:opacity-70 hover:bg-primary hover:text-white dark:bg-gray-800 dark:text-muted-dark dark:hover:bg-primary">
+# 交叉编译 </a><a href="/tags/AArch64" class="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-muted transition-colors active:opacity-70 hover:bg-primary hover:text-white dark:bg-gray-800 dark:text-muted-dark dark:hover:bg-primary">
+# AArch64 </a><a href="/tags/Linux" class="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-muted transition-colors active:opacity-70 hover:bg-primary hover:text-white dark:bg-gray-800 dark:text-muted-dark dark:hover:bg-primary">
+# Linux </a> </div> </header>  <h2 id="先分清编译与链接">先分清编译与链接</h2>
+<p>在 x86_64 开发机上构建 ARM64 Linux 程序，看起来像是一件需要特殊编译器的事。实际上，C3 已经内置了 <code>linux-aarch64</code> 目标，真正麻烦的是链接阶段。</p>
+<p>整个流程可以拆成四步：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>C3 源码</span></span>
+<span class="line"><span>  -> C3 / LLVM 生成 AArch64 目标文件</span></span>
+<span class="line"><span>  -> 链接 AArch64 的 crt、libc、libgcc</span></span>
+<span class="line"><span>  -> 生成 AArch64 Linux ELF</span></span></code></pre>
+<p>生成目标文件只需要 C3 和 LLVM。要生成最终可执行文件，开发机还必须准备目标架构的 C 运行库、启动文件和 GCC 运行时。普通 Linux 程序和裸机程序的需求不同，下文讨论的是前者。</p>
+<p>先确认当前编译器支持这个目标：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">c3c</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> --list-targets</span></span></code></pre>
+<p>输出中应当包含 <code>linux-aarch64</code>。本文的完整流程基于 C3 <code>0.8.5_1</code> 验证；其他版本的路径和参数应以本机安装结果为准。</p>
+<h2 id="开发环境准备">开发环境准备</h2>
+<h3 id="linux">Linux</h3>
+<p>在 Arch Linux 或 Manjaro 上安装交叉工具链：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">sudo</span><span style="color:#032F62;--shiki-dark:#96D0FF"> pacman</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -S</span><span style="color:#032F62;--shiki-dark:#96D0FF"> aarch64-linux-gnu-gcc</span><span style="color:#032F62;--shiki-dark:#96D0FF"> aarch64-linux-gnu-glibc</span></span></code></pre>
+<p>Debian 和 Ubuntu 使用：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">sudo</span><span style="color:#032F62;--shiki-dark:#96D0FF"> apt-get</span><span style="color:#032F62;--shiki-dark:#96D0FF"> update</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">sudo</span><span style="color:#032F62;--shiki-dark:#96D0FF"> apt-get</span><span style="color:#032F62;--shiki-dark:#96D0FF"> install</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -y</span><span style="color:#032F62;--shiki-dark:#96D0FF"> gcc-aarch64-linux-gnu</span><span style="color:#032F62;--shiki-dark:#96D0FF"> libc6-dev-arm64-cross</span><span style="color:#032F62;--shiki-dark:#96D0FF"> file</span></span></code></pre>
+<p>Fedora 使用：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">sudo</span><span style="color:#032F62;--shiki-dark:#96D0FF"> dnf</span><span style="color:#032F62;--shiki-dark:#96D0FF"> install</span><span style="color:#032F62;--shiki-dark:#96D0FF"> gcc-aarch64-linux-gnu</span><span style="color:#032F62;--shiki-dark:#96D0FF"> glibc-aarch64-linux-gnu</span></span></code></pre>
+<p>安装完成后，先找到关键文件的位置。<code>crt1.o</code> 和 <code>libc.so.6</code> 通常位于 <code>/usr/aarch64-linux-gnu/lib</code>，而 <code>crtbegin.o</code> 与 <code>libgcc.a</code> 的位置会随发行版和 GCC 版本变化：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">find</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /usr/lib</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -path</span><span style="color:#032F62;--shiki-dark:#96D0FF"> '*aarch64*'</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -name</span><span style="color:#032F62;--shiki-dark:#96D0FF"> crtbegin.o</span><span style="color:#D73A49;--shiki-dark:#F47067"> 2></span><span style="color:#032F62;--shiki-dark:#96D0FF">/dev/null</span></span></code></pre>
+<p>Arch 和 Manjaro 通常使用 <code>/usr/lib/gcc/aarch64-linux-gnu/&#x3C;version></code>，Debian 和 Ubuntu 则使用 <code>/usr/lib/gcc-cross/aarch64-linux-gnu/&#x3C;version></code>。</p>
+<h3 id="windows优先使用-wsl2">Windows：优先使用 WSL2</h3>
+<p>在管理员 PowerShell 中安装 Ubuntu：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="powershell"><code><span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">wsl </span><span style="color:#D73A49;--shiki-dark:#F47067">--</span><span style="color:#24292E;--shiki-dark:#ADBAC7">install </span><span style="color:#D73A49;--shiki-dark:#F47067">-</span><span style="color:#24292E;--shiki-dark:#ADBAC7">d Ubuntu</span></span></code></pre>
+<p>进入 WSL 后安装交叉工具链和 Linux 版 C3：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">sudo</span><span style="color:#032F62;--shiki-dark:#96D0FF"> apt-get</span><span style="color:#032F62;--shiki-dark:#96D0FF"> update</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">sudo</span><span style="color:#032F62;--shiki-dark:#96D0FF"> apt-get</span><span style="color:#032F62;--shiki-dark:#96D0FF"> install</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -y</span><span style="color:#032F62;--shiki-dark:#96D0FF"> gcc-aarch64-linux-gnu</span><span style="color:#032F62;--shiki-dark:#96D0FF"> libc6-dev-arm64-cross</span><span style="color:#032F62;--shiki-dark:#96D0FF"> file</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">curl</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -fsSL</span><span style="color:#032F62;--shiki-dark:#96D0FF"> https://raw.githubusercontent.com/c3lang/c3c/refs/heads/master/install/install.sh</span><span style="color:#D73A49;--shiki-dark:#F47067"> |</span><span style="color:#6F42C1;--shiki-dark:#F69D50"> bash</span></span></code></pre>
+<p>重新打开终端后确认安装：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">c3c</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> --version</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">find</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /usr/lib/gcc-cross</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -path</span><span style="color:#032F62;--shiki-dark:#96D0FF"> '*aarch64*'</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -name</span><span style="color:#032F62;--shiki-dark:#96D0FF"> crtbegin.o</span></span></code></pre>
+<p>Windows 项目通常位于 <code>/mnt/&#x3C;盘符>/...</code>。进入对应目录后，构建流程与普通 Linux 开发机一致。这样既能使用 Linux 文件语义，也能减少 Windows 解压工具破坏 sysroot 软链接的问题。</p>
+<h3 id="windows纯原生交叉编译">Windows：纯原生交叉编译</h3>
+<p>如果必须继续使用 Windows 版 <code>c3c.exe</code>，就需要手动准备一个 AArch64 Linux sysroot。可以选择 ARM 官方工具链中的 <code>aarch64-none-linux-gnu</code>，也可以使用 Bootlin 提供的整套工具链。</p>
+<p>ARM 官方工具链通常把关键文件放在：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>&#x3C;toolchain>\aarch64-none-linux-gnu\libc\usr\lib64</span></span>
+<span class="line"><span>&#x3C;toolchain>\lib\gcc\aarch64-none-linux-gnu\&#x3C;version></span></span></code></pre>
+<p>Bootlin 工具链通常把关键文件放在：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>&#x3C;toolchain>\aarch64-buildroot-linux-gnu\sysroot\usr\lib</span></span>
+<span class="line"><span>&#x3C;toolchain>\lib\gcc\aarch64-buildroot-linux-gnu\&#x3C;version></span></span></code></pre>
+<p>目录布局会随工具链版本变化，不要只凭文档猜路径。解压后可以用 PowerShell 统一确认：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="powershell"><code><span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">Get-ChildItem</span><span style="color:#D73A49;--shiki-dark:#F47067"> -</span><span style="color:#24292E;--shiki-dark:#ADBAC7">Recurse C:\sysroots\aarch64</span><span style="color:#D73A49;--shiki-dark:#F47067">-</span><span style="color:#24292E;--shiki-dark:#ADBAC7">linux</span><span style="color:#D73A49;--shiki-dark:#F47067">-</span><span style="color:#24292E;--shiki-dark:#ADBAC7">gnu </span><span style="color:#D73A49;--shiki-dark:#F47067">`</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F47067">  -</span><span style="color:#24292E;--shiki-dark:#ADBAC7">Include crt1.o</span><span style="color:#D73A49;--shiki-dark:#F47067">,</span><span style="color:#24292E;--shiki-dark:#ADBAC7">libc.so.</span><span style="color:#005CC5;--shiki-dark:#6CB6FF">6</span><span style="color:#D73A49;--shiki-dark:#F47067">,</span><span style="color:#24292E;--shiki-dark:#ADBAC7">crtbegin.o</span><span style="color:#D73A49;--shiki-dark:#F47067">,</span><span style="color:#24292E;--shiki-dark:#ADBAC7">libgcc.a</span></span></code></pre>
+<p>最重要的一点是确认选择的是 Linux 工具链。<code>arm-none-eabi</code> 面向裸机，Mingw-w64 的 AArch64 工具链通常面向 Windows，它们都不能替代 Linux glibc sysroot。</p>
+<h2 id="glibc-必须匹配目标机">glibc 必须匹配目标机</h2>
+<p>交叉编译能否成功，和产物能否在开发板上运行，是两个不同的问题。编译器、sysroot 和目标机上的 glibc 是三个独立组件，版本关系必须在动手配置前确认。</p>
+<p>先在 ARM64 开发板上执行：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">uname</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -m</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">ldd</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> --version</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">cat</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /etc/os-release</span></span></code></pre>
+<p>例如 Debian 11 bullseye 的 glibc 是 2.31。开发机若使用要求 <code>GLIBC_2.34</code> 或 <code>GLIBC_2.35</code> 的新工具链，即使链接成功，产物也可能在板上报错：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>version `GLIBC_2.34' not found</span></span></code></pre>
+<p>选择的基本原则是：sysroot 中的 glibc 不高于目标机上的 glibc。使用完全相同的版本最省心，稍旧且兼容的版本也可以。<code>--sysroot</code> 只改变链接器查找文件的路径，不会降低 ELF 对 glibc 符号版本的依赖。</p>
+<p>Bootlin 已经组合好 glibc、GCC 运行时和 sysroot，适合从零搭建纯 Windows 环境。Debian 11 可以选择：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>aarch64--glibc--stable-2020.08-1.tar.bz2</span></span></code></pre>
+<p>文件名里的 <code>stable</code> 只表示发布渠道，不代表兼容所有旧开发板。下载前仍要确认该批次对应的 glibc 版本。</p>
+<p>Manjaro 和 Arch 的软件仓库通常只保留最新版交叉工具链。如果目标板使用 glibc 2.31，可以从 Arch Linux Archive 取得同期版本，但不建议覆盖系统包：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">mkdir</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -p</span><span style="color:#032F62;--shiki-dark:#96D0FF"> .toolchains/aarch64-glibc-2.31</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">curl</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -fL</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">  https://archive.archlinux.org/packages/a/aarch64-linux-gnu-glibc/aarch64-linux-gnu-glibc-2.31-1-any.pkg.tar.zst</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">  -o</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /tmp/aarch64-glibc-2.31.pkg.tar.zst</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">curl</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -fL</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">  https://archive.archlinux.org/packages/a/aarch64-linux-gnu-gcc/aarch64-linux-gnu-gcc-9.3.0-1-x86_64.pkg.tar.zst</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">  -o</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /tmp/aarch64-gcc-9.3.0.pkg.tar.zst</span></span></code></pre>
+<p>分别把 glibc 和 GCC 的链接文件解压到项目内的 <code>.toolchains/aarch64-glibc-2.31</code>。glibc 包可以整体解开，GCC 包只需要 <code>crtbegin*</code>、<code>crtend*</code>、<code>libgcc*</code> 和 <code>libgcc_s*</code> 等链接所需文件。</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">bsdtar</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -xf</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /tmp/aarch64-glibc-2.31.pkg.tar.zst</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">  -C</span><span style="color:#032F62;--shiki-dark:#96D0FF"> .toolchains/aarch64-glibc-2.31</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">bsdtar</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -xf</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /tmp/aarch64-gcc-9.3.0.pkg.tar.zst</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">  -C</span><span style="color:#032F62;--shiki-dark:#96D0FF"> .toolchains/aarch64-glibc-2.31</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">  'usr/lib/gcc/aarch64-linux-gnu/9.3.0/crtbegin*.o'</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">  'usr/lib/gcc/aarch64-linux-gnu/9.3.0/crtend*.o'</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">  'usr/lib/gcc/aarch64-linux-gnu/9.3.0/libgcc*'</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">  'usr/aarch64-linux-gnu/lib64/libgcc_s*'</span></span></code></pre>
+<p><code>.toolchains/</code> 应加入 <code>.gitignore</code>。glibc 和 GCC 尽量来自相近时期：只替换旧 glibc，却继续使用依赖新 glibc 的新版 <code>libgcc_s.so.1</code>，仍然可能失败。</p>
+<h2 id="三个链接配置">三个链接配置</h2>
+<p>C3 的 Linux 交叉链接主要涉及三个配置，它们不能互相替代。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>配置</th><th>负责的内容</th><th>示例</th></tr></thead><tbody><tr><td><code>linux-crt</code></td><td><code>crt1.o</code>、<code>crti.o</code>、<code>crtn.o</code>、<code>libc.so</code>、<code>libc.so.6</code></td><td><code>/usr/aarch64-linux-gnu/lib</code></td></tr><tr><td><code>linux-crtbegin</code></td><td><code>crtbegin.o</code>、<code>crtend.o</code>、<code>libgcc.a</code></td><td><code>/usr/lib/gcc-cross/aarch64-linux-gnu/&#x3C;version></code></td></tr><tr><td><code>link-args</code></td><td>原样传给 lld 的额外参数</td><td><code>--sysroot=/usr/aarch64-linux-gnu</code></td></tr></tbody></table>
+<p><code>linux-crt</code> 解决程序如何启动、标准 C 库从哪里来；<code>linux-crtbegin</code> 补全 GCC 的初始化、清理和底层运行时。<code>link-args</code> 则直接交给 lld，常用于补充 sysroot 或其他搜索路径。</p>
+<p>为什么需要 sysroot？很多工具链里的 <code>libc.so</code> 并不是普通共享库，而是 GNU ld 链接脚本。脚本里可能写着：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>GROUP ( /lib/libc.so.6 /lib/libc_nonshared.a</span></span>
+<span class="line"><span>        AS_NEEDED ( /lib/ld-linux-aarch64.so.1 ) )</span></span></code></pre>
+<p>这些 <code>/lib/...</code> 是目标系统中的路径。没有 sysroot 时，lld 会尝试从 x86_64 宿主机上寻找它们，并报出 <code>cannot open /lib/ld-linux-aarch64.so.1</code>。正确做法是让这些绝对路径映射到解压后的 AArch64 目录，而不是复制运行库到宿主机根目录。</p>
+<h3 id="linux-与-wsl-配置">Linux 与 WSL 配置</h3>
+<p>在项目根目录的 <code>project.json</code> 中加入：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="json"><code><span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">{</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">  "targets"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: {</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">    "hello-aarch64"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: {</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "type"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"executable"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "name"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"00_hello_world"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "target"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"linux-aarch64"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "linux-crt"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"/usr/aarch64-linux-gnu/lib"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "linux-crtbegin"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"/usr/lib/gcc-cross/aarch64-linux-gnu/&#x3C;version>"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "link-args"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: [</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">        "--sysroot=/usr/aarch64-linux-gnu"</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">      ],</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "output"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"build/aarch64"</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">    }</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">  }</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">}</span></span></code></pre>
+<p>把 <code>&#x3C;version></code> 替换成 <code>find</code> 命令查到的真实目录。Arch 和 Manjaro 需要把 <code>gcc-cross</code> 路径改成实际的 <code>/usr/lib/gcc/...</code>。</p>
+<p>构建时指定目标名：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">c3c</span><span style="color:#032F62;--shiki-dark:#96D0FF"> build</span><span style="color:#032F62;--shiki-dark:#96D0FF"> hello-aarch64</span></span></code></pre>
+<p>如果不修改项目配置，也可以在命令行临时覆盖：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">c3c</span><span style="color:#032F62;--shiki-dark:#96D0FF"> build</span><span style="color:#032F62;--shiki-dark:#96D0FF"> 00_hello_world</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">  --target</span><span style="color:#032F62;--shiki-dark:#96D0FF"> linux-aarch64</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">  --linux-crt</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /usr/aarch64-linux-gnu/lib</span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">  --linux-crtbegin</span><span style="color:#032F62;--shiki-dark:#96D0FF"> /usr/lib/gcc-cross/aarch64-linux-gnu/</span><span style="color:#D73A49;--shiki-dark:#F47067">&#x3C;</span><span style="color:#032F62;--shiki-dark:#96D0FF">versio</span><span style="color:#24292E;--shiki-dark:#ADBAC7">n</span><span style="color:#D73A49;--shiki-dark:#F47067">></span><span style="color:#005CC5;--shiki-dark:#F47067"> \</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#6CB6FF">  -z</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> --sysroot=/usr/aarch64-linux-gnu</span></span></code></pre>
+<p>排查路径问题时，可以打印 C3 实际传入的链接参数：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">c3c</span><span style="color:#032F62;--shiki-dark:#96D0FF"> build</span><span style="color:#032F62;--shiki-dark:#96D0FF"> 00_hello_world</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> --print-linking</span></span></code></pre>
+<h3 id="windows-原生配置">Windows 原生配置</h3>
+<p>使用 ARM 官方工具链时，<code>--sysroot</code> 指向 <code>libc</code> 根目录，<code>linux-crt</code> 则指向其中的 <code>usr/lib64</code>：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="json"><code><span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">{</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">  "targets"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: {</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">    "hello-aarch64"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: {</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "type"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"executable"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "name"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"00_hello_world"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "target"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"linux-aarch64"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "linux-crt"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"C:/sysroots/aarch64-linux-gnu/aarch64-none-linux-gnu/libc/usr/lib64"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "linux-crtbegin"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"C:/sysroots/aarch64-linux-gnu/lib/gcc/aarch64-none-linux-gnu/15.3.1"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "link-args"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: [</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">        "--sysroot=C:/sysroots/aarch64-linux-gnu/aarch64-none-linux-gnu/libc"</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">      ],</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">      "output"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"build/aarch64"</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">    }</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">  }</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">}</span></span></code></pre>
+<p>这里的 <code>15.3.1</code> 只是路径结构示例。JSON 中优先使用正斜杠；如果使用反斜杠，每个反斜杠都要写成 <code>\\</code>。</p>
+<p>使用 Bootlin 并面向 Debian 11 时，可以额外传入运行库搜索路径和 libdl 入口：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="json"><code><span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">{</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">  "linux-crt"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"D:/aarch64--glibc--stable-2020.08-1/aarch64-buildroot-linux-gnu/sysroot/usr/lib"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">  "linux-crtbegin"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"D:/aarch64--glibc--stable-2020.08-1/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">  "link-args"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: [</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">    "-LD:/aarch64--glibc--stable-2020.08-1/aarch64-buildroot-linux-gnu/sysroot/lib"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">    "D:/aarch64--glibc--stable-2020.08-1/aarch64-buildroot-linux-gnu/sysroot/lib/libdl.so"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#96D0FF">    "--sysroot=D:/aarch64--glibc--stable-2020.08-1/aarch64-buildroot-linux-gnu/sysroot"</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">  ]</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">}</span></span></code></pre>
+<p>构建命令与 Linux 相同：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="powershell"><code><span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">c3c build hello</span><span style="color:#D73A49;--shiki-dark:#F47067">-</span><span style="color:#24292E;--shiki-dark:#ADBAC7">aarch64</span></span></code></pre>
+<p>Windows 直接解压 Linux 工具链时要特别小心。7-Zip 等工具可能把 <code>.tar.xz</code> 中的软链接还原成 0 字节普通文件，导致 <code>libc.so.6</code>、<code>libdl.so.2</code> 和目录链接 <code>lib64</code> 失效。</p>
+<p>链接器随后可能报出：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>ld.lld: error: unable to find library -lc</span></span>
+<span class="line"><span>ld.lld: error: cannot open .../sysroot/usr/lib/crti.o</span></span></code></pre>
+<p>这通常不是压缩包损坏，而是软链接没有被保留。优先在 WSL 中用 <code>tar</code> 解压，是更稳妥的解决办法。如果必须保留纯 Windows 路线，就要核对关键文件大小，并按工具链中的真实文件名重建失效的硬链接或目录联接。</p>
+<h2 id="构建与验证">构建与验证</h2>
+<p>构建完成后，先检查文件类型：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">file</span><span style="color:#032F62;--shiki-dark:#96D0FF"> build/aarch64/00_hello_world</span></span></code></pre>
+<p><code>output</code> 表示输出目录，可执行文件名由 <code>name</code> 决定。预期结果类似：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>ELF 64-bit LSB pie executable, ARM aarch64, ...</span></span></code></pre>
+<p>再检查 ELF 需要的 glibc 符号版本：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">readelf</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> --version-info</span><span style="color:#032F62;--shiki-dark:#96D0FF"> build/aarch64/00_hello_world</span><span style="color:#D73A49;--shiki-dark:#F47067"> |</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">  grep</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -o</span><span style="color:#032F62;--shiki-dark:#96D0FF"> 'GLIBC_[0-9.]*'</span><span style="color:#D73A49;--shiki-dark:#F47067"> |</span><span style="color:#6F42C1;--shiki-dark:#F69D50"> sort</span><span style="color:#005CC5;--shiki-dark:#6CB6FF"> -Vu</span></span></code></pre>
+<p>如果本机是 x86_64，不能直接执行 ARM64 程序，也不能把交叉产物交给 <code>c3c run</code>。可以在 Linux 或 WSL 中用 qemu-user 做最小验证：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">sudo</span><span style="color:#032F62;--shiki-dark:#96D0FF"> apt-get</span><span style="color:#032F62;--shiki-dark:#96D0FF"> install</span><span style="color:#032F62;--shiki-dark:#96D0FF"> qemu-user</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#F69D50">qemu-aarch64</span><span style="color:#032F62;--shiki-dark:#96D0FF"> ./build/aarch64/00_hello_world</span></span></code></pre>
+<p>最后把产物放到目标开发板上再次运行。只有在目标板、目标 glibc 和目标 ABI 上完成验证，交叉编译才算真正闭环。</p>
+<h2 id="常见错误速查">常见错误速查</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>现象</th><th>大概率原因</th><th>检查方向</th></tr></thead><tbody><tr><td><code>Failed to find the C runtime at link time</code></td><td>没找到目标 C runtime</td><td>检查 <code>linux-crt</code> 是否包含 <code>crt1.o</code> 和 <code>libc.so.6</code></td></tr><tr><td><code>unable to find library -lgcc</code></td><td>没找到目标 GCC 运行时</td><td>检查 <code>linux-crtbegin</code> 是否指向带 GCC 版本号的目录</td></tr><tr><td><code>cannot open /lib/ld-linux-aarch64.so.1</code></td><td>链接脚本中的绝对路径没有映射</td><td>增加正确的 <code>--sysroot</code></td></tr><tr><td><code>cannot open /lib64/libm.so.6</code></td><td>sysroot 或运行库搜索路径不完整</td><td>检查 <code>--sysroot</code>、<code>-L</code> 和 <code>lib64</code> 目录</td></tr><tr><td><code>unable to find library -lc</code></td><td>Windows 解压后软链接损坏</td><td>用 WSL 解压，或重建共享库入口</td></tr><tr><td><code>GLIBC_X.Y not found</code></td><td>sysroot 的 glibc 比目标板新</td><td>换用匹配目标系统的旧版 sysroot</td></tr><tr><td><code>c3c run</code> 启动失败</td><td>主机不能直接运行 ARM64 产物</td><td>使用 qemu-user 或目标开发板</td></tr></tbody></table>
+<p>其中 <code>GLIBC_X.Y not found</code> 最容易被误判。它说明程序已经链接完成，但产物使用了目标板没有的 ABI 符号。继续调整 <code>--sysroot</code> 只能修复文件查找问题，无法修复已经写进 ELF 的版本要求。</p>
+<h2 id="裸机项目的例外">裸机项目的例外</h2>
+<p>如果目标是 freestanding 或裸机程序，就不需要准备 Linux libc，通常也不应使用 <code>linux-aarch64</code>。此时可以关闭标准库和 libc，并使用类似下面的配置：</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="background-color:#fff;--shiki-dark-bg:#22272e;color:#24292e;--shiki-dark:#adbac7; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="json"><code><span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">{</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">  "target"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"elf-aarch64"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">  "use-stdlib"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#005CC5;--shiki-dark:#6CB6FF">false</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">  "link-libc"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#005CC5;--shiki-dark:#6CB6FF">false</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">  "memory-env"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#032F62;--shiki-dark:#96D0FF">"none"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#8DDB8C">  "no-entry"</span><span style="color:#24292E;--shiki-dark:#ADBAC7">: </span><span style="color:#005CC5;--shiki-dark:#6CB6FF">true</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#ADBAC7">}</span></span></code></pre>
+<p>这种方式需要自行提供启动代码、内存布局和必要的运行时实现。它解决的是另一类问题，不属于普通 Linux 可执行文件的交叉编译。</p>
+<h2 id="小结">小结</h2>
+<p>把 C3 交叉编译到 AArch64，关键不是“让 C3 支持 ARM64”，而是给链接器准备一套完整且版本匹配的目标环境。</p>
+<p>Linux 和 WSL 可以直接使用发行版提供的交叉工具链，再把 <code>linux-crt</code>、<code>linux-crtbegin</code> 和 <code>--sysroot</code> 指向实际文件。Windows 原生路线需要额外管理解压后的工具链和软链接，因此更适合作为备用方案。</p>
+<p>无论选择哪条路线，都应先读目标板的 glibc，再选 sysroot；构建后检查 ELF 架构和符号版本，最后在目标机上运行。这样，交叉编译的问题会从一连串链接器报错，缩小为可以逐项核对的路径与版本关系。</p>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a href="https://c3-lang.org/">C3 Language Documentation</a></li>
+<li><a href="https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/">Bootlin AArch64 Toolchains</a></li>
+<li><a href="https://learn.arm.com/install-guides/gcc/arm-gnu/">Arm GNU Toolchain Installation Guide</a></li>
+</ul>  </article> <nav class="mt-12 grid grid-cols-2 gap-4 border-t border-border pt-6 dark:border-border-dark"> <div></div> <a href="/blog/2026-07-17-regular-expression" class="group text-right"> <span class="text-xs text-muted dark:text-muted-dark"><span data-i18n="post.nextPost">下一篇</span> &rarr;</span> <p class="mt-1 text-sm text-text group-hover:text-primary dark:text-text-dark">正则表达式完全指北</p> </a> </nav> <div class="giscus mt-12 border-t border-border pt-8 dark:border-border-dark"></div> <script type="module">const i=document.querySelector(".giscus");let n=!1;const a=new IntersectionObserver(s=>{if(s[0].isIntersecting&&!n){n=!0,a.disconnect();const e=document.documentElement.classList.contains("dark")?"dark_dimmed":"light",t=document.createElement("script");t.src="https://giscus.app/client.js",t.setAttribute("data-repo","ccnuu/ccnuu.github.io"),t.setAttribute("data-repo-id","R_kgDOJ7X2tw"),t.setAttribute("data-category","Announcements"),t.setAttribute("data-category-id","DIC_kwDOJ7X2t84CjXsS"),t.setAttribute("data-mapping","pathname"),t.setAttribute("data-reactions-enabled","1"),t.setAttribute("data-emit-metadata","0"),t.setAttribute("data-input-position","top"),t.setAttribute("data-theme",e),t.setAttribute("data-lang","zh-CN"),t.setAttribute("crossorigin","anonymous"),i.appendChild(t)}});a.observe(i);new MutationObserver(()=>{const s=document.documentElement.classList.contains("dark")?"dark_dimmed":"light",e=document.querySelector(".giscus iframe");e?.contentWindow&&e.contentWindow.postMessage({giscus:{setConfig:{theme:s}}},"https://giscus.app")}).observe(document.documentElement,{attributes:!0,attributeFilter:["class"]});</script>  </main> </div> <!-- 桌面端：固定右侧 --><div id="scroll-buttons" class="pointer-events-none fixed inset-0 z-30 hidden lg:block"> <div class="absolute bottom-28" style="right: calc(50% - 384px - 42px)"> <div class="pointer-events-auto flex flex-col gap-2"> <button id="scroll-back" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="返回上一页" data-i18n-aria="scroll.back"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M15 18l-6-6 6-6"></path> </svg> </button> <button id="scroll-top" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="回到顶部" data-i18n-aria="scroll.top"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M18 15l-6-6-6 6"></path> </svg> </button> <button id="scroll-bottom" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="跳到底部" data-i18n-aria="scroll.bottom"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M6 9l6 6 6-6"></path> </svg> </button> </div> </div> </div> <!-- 手机端：右下角固定，footer 上方 --> <div id="scroll-buttons-mobile" class="pointer-events-none fixed inset-0 z-30 lg:hidden"> <div class="absolute right-4 bottom-28"> <div class="pointer-events-auto flex flex-col gap-2"> <button id="toc-btn-m" type="button" class="hidden h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="目录" data-i18n-aria="scroll.toc"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M4 6h16M4 12h10M4 18h16"></path> </svg> </button> <button id="scroll-back-m" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" aria-label="返回上一页" data-i18n-aria="scroll.back"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M15 18l-6-6 6-6"></path> </svg> </button> <button id="scroll-top-m" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="回到顶部" data-i18n-aria="scroll.top"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M18 15l-6-6-6 6"></path> </svg> </button> <button id="scroll-bottom-m" type="button" class="flex h-9 w-9 items-center justify-center rounded-full glass-card text-muted transition-all active:scale-90 hover:text-text dark:text-muted-dark dark:hover:text-text-dark" style="display:none" aria-label="跳到底部" data-i18n-aria="scroll.bottom"> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M6 9l6 6 6-6"></path> </svg> </button> </div> </div> </div> <script type="module">(function(){var e=document.querySelector(".flex-1.overflow-y-auto");if(!e)return;document.getElementById("scroll-buttons"),document.getElementById("scroll-buttons-mobile");var n=document.getElementById("scroll-top"),o=document.getElementById("scroll-bottom"),r=document.getElementById("scroll-back"),c=document.getElementById("scroll-top-m"),l=document.getElementById("scroll-bottom-m"),d=document.getElementById("scroll-back-m");function s(){var t=e.scrollHeight>e.clientHeight;n&&(n.style.display=t?"":"none"),o&&(o.style.display=t?"":"none"),c&&(c.style.display=t?"":"none"),l&&(l.style.display=t?"":"none")}s(),window.addEventListener("resize",s);function i(t){e.scrollTo({top:t,behavior:"smooth"})}r&&r.addEventListener("click",function(){history.back()}),n&&n.addEventListener("click",function(){i(0)}),o&&o.addEventListener("click",function(){i(e.scrollHeight)}),d&&d.addEventListener("click",function(){history.back()}),c&&c.addEventListener("click",function(){i(0)}),l&&l.addEventListener("click",function(){i(e.scrollHeight)})})();</script> </div> <div class="pointer-events-none fixed inset-0 z-30 hidden lg:block"> <div class="absolute top-24" style="left: calc(50% - 384px - 224px - 48px)"> <div class="pointer-events-auto w-56 space-y-4"> <aside> <div class="space-y-4 glass-card p-5"> <div class="flex flex-col items-center text-center"> <a href="/"> <img src="/favicon.svg" alt="avatar" class="mb-3 h-20 w-20 rounded-full border-2 border-border transition-opacity hover:opacity-80 dark:border-border-dark"> </a> <a href="/" class="text-lg font-semibold text-text hover:text-primary dark:text-text-dark"> ccnuu </a> <p class="mt-1 text-xs text-muted dark:text-muted-dark">  </p> </div> <hr class="border-border dark:border-border-dark"> <div class="space-y-2 text-sm"> <a href="https://github.com/ccnuu" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark"> <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"> <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"></path> </svg>
+GitHub
+</a> <a href="mailto:cy.arctique@gmail.com" class="flex items-center gap-2 text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark"> <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"></path> </svg>
+Email
+</a> </div> </div> </aside> <a href="https://github.com/ccnuu" target="_blank" rel="noopener noreferrer" class="glass-card block overflow-hidden transition-shadow hover:shadow-lg"> <img src="https://ghchart.rshah.org/ccnuu" alt="GitHub contributions" class="w-full h-auto" loading="lazy"> </a> </div> </div> </div> <footer class="shrink-0 glass py-6"> <div class="mx-auto max-w-3xl px-4 text-center text-sm text-muted dark:text-muted-dark"> <p>&copy; 2026 ccnuu. Built with <a href="https://astro.build" class="underline transition-opacity active:opacity-60 hover:text-text dark:hover:text-text-dark" rel="noopener noreferrer">Astro</a>.</p> <p class="mt-1"> <span data-i18n="footer.running">博客已运行</span> <span id="runtime" data-start="2023-07-14T00:00:00.000Z">—</span> </p> </div> </footer> <script type="module">const e=document.getElementById("runtime"),a=new Date(e.dataset.start);function n(){const t=Math.floor((new Date().getTime()-a.getTime())/(1e3*60*60*24)),o=document.documentElement.lang||"zh";e.textContent=o==="zh"?`${t} 天`:`${t} days`}n();setInterval(n,6e4);</script> <div id="search-modal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true"> <div class="mx-auto mt-[15vh] max-w-xl px-4"> <div class="glass-strong rounded-xl p-4 shadow-2xl"> <div id="search-input-container"></div> <div id="search-results" class="max-h-[50vh] space-y-2 overflow-y-auto empty:hidden"></div> <p id="search-empty" class="hidden py-8 text-center text-sm text-muted dark:text-muted-dark"></p> </div> </div> </div> <script type="module">const d=document.getElementById("search-modal"),m=document.getElementById("search-input-container"),a=document.getElementById("search-results"),r=document.getElementById("search-empty"),p=document.documentElement.lang||"zh",o=p==="zh",t=document.createElement("input");t.id="search-input";t.type="text";t.placeholder=o?"搜索文章...":"Search articles...";t.className="mb-3 w-full rounded-lg border border-border bg-transparent px-4 py-3 text-text outline-none focus:border-primary dark:border-border-dark dark:text-text-dark";m.appendChild(t);r.textContent=o?"无结果":"No results";d.addEventListener("click",e=>{e.target===d&&(d.classList.add("hidden"),t.value="",a.innerHTML="",r.classList.add("hidden"))});document.addEventListener("keydown",e=>{e.key==="Escape"&&(d.classList.add("hidden"),t.value="",a.innerHTML="",r.classList.add("hidden")),(e.ctrlKey||e.metaKey)&&e.key==="k"&&(e.preventDefault(),d.classList.remove("hidden"),setTimeout(()=>t.focus(),100))});let l;t.addEventListener("input",()=>{clearTimeout(l),l=setTimeout(async()=>{const e=t.value.trim();if(!e){a.innerHTML="",r.classList.add("hidden");return}try{const i=await window.__pagefindSearch?.();if(!i)return;const s=await i.search(e);if(!s||!s.results.length){a.innerHTML="",r.classList.remove("hidden");return}r.classList.add("hidden");const u=await Promise.all(s.results.slice(0,8).map(async n=>{const c=await n.data();return{url:c.url,title:c.meta?.title??n.id,excerpt:c.excerpt}}));a.innerHTML=u.map(n=>`
+            <a href="${n.url}" class="block rounded-lg p-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
+              <p class="text-sm font-medium text-text dark:text-text-dark">${n.title}</p>
+              <p class="mt-1 text-xs text-muted dark:text-muted-dark line-clamp-2">${n.excerpt}</p>
+            </a>
+          `).join("")}catch{a.innerHTML=""}},200)});</script> <script>
+  let pagefindReady = null;
+  window.__pagefindSearch = function () {
+    if (!pagefindReady) {
+      pagefindReady = import('/pagefind/pagefind.js')
+        .then(async (m) => { await m.init(); return m; })
+        .catch(() => null);
+    }
+    return pagefindReady;
+  };
+</script> <script>
+      document.querySelectorAll('.theme-toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var cur = localStorage.getItem('theme') || 'dark';
+          var next = cur === 'dark' ? 'light' : 'dark';
+          localStorage.setItem('theme', next);
+          var d = document.documentElement;
+          if (next === 'dark') { d.classList.add('dark'); }
+          else { d.classList.remove('dark'); }
+        });
+      });
+    </script> <!-- client-side i18n --> <script>
+      (function() {
+        var en = window.__i18n_en;
+        if (!en) return;
+        function t(key) {
+          var keys = key.split('.'), v = en;
+          for (var i = 0; i < keys.length; i++) { if (!v) return key; v = v[keys[i]]; }
+          return typeof v === 'string' ? v : key;
+        }
+        function swap() {
+          document.querySelectorAll('[data-i18n]').forEach(function(el) {
+            el.textContent = t(el.getAttribute('data-i18n'));
+          });
+          document.querySelectorAll('[data-i18n-aria]').forEach(function(el) {
+            el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
+          });
+          document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
+            el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph')));
+          });
+        }
+        // Run after full DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', swap);
+        } else {
+          swap();
+        }
+      })();
+    </script> </body> </html>  <script type="module">document.querySelectorAll("article pre").forEach(e=>{const t=document.createElement("button");t.className="copy-btn",t.innerHTML=`
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="9" y="9" width="13" height="13" rx="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+      </svg>`,t.addEventListener("click",async o=>{o.stopPropagation();const i=e.querySelector("code")?.textContent??e.textContent??"";await navigator.clipboard.writeText(i),t.classList.add("copied"),t.innerHTML=`
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>`,setTimeout(()=>{t.classList.remove("copied"),t.innerHTML=`
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>`},2e3)}),e.appendChild(t)});</script> <!-- 桌面端：固定右侧 TOC --> <div class="pointer-events-none fixed inset-0 z-30 hidden lg:block"> <div class="absolute top-24 bottom-28 overflow-y-auto pointer-events-auto w-48" style="right: calc(50% - 384px - 192px - 48px)"> <nav><h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-muted dark:text-muted-dark" data-i18n="post.toc">目录</h2><ul class="space-y-1 border-l border-border dark:border-border-dark"><li><a href="#先分清编译与链接" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">先分清编译与链接</a></li><li><a href="#开发环境准备" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">开发环境准备</a></li><li><a href="#linux" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Linux</a></li><li><a href="#windows优先使用-wsl2" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Windows：优先使用 WSL2</a></li><li><a href="#windows纯原生交叉编译" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Windows：纯原生交叉编译</a></li><li><a href="#glibc-必须匹配目标机" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">glibc 必须匹配目标机</a></li><li><a href="#三个链接配置" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">三个链接配置</a></li><li><a href="#linux-与-wsl-配置" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Linux 与 WSL 配置</a></li><li><a href="#windows-原生配置" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Windows 原生配置</a></li><li><a href="#构建与验证" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">构建与验证</a></li><li><a href="#常见错误速查" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">常见错误速查</a></li><li><a href="#裸机项目的例外" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">裸机项目的例外</a></li><li><a href="#小结" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">小结</a></li><li><a href="#参考资料" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">参考资料</a></li></ul></nav> </div> </div> <!-- 手机端：浮动 TOC 按钮 -->  <div id="toc-mobile-overlay" class="fixed inset-0 z-40 hidden bg-black/50 lg:hidden" role="dialog"> <div class="absolute right-4 top-1/2 -translate-y-1/2 w-64 max-h-[80vh] rounded-lg glass-strong p-6 shadow-2xl flex flex-col"> <div class="flex items-center justify-between mb-4 shrink-0"> <h3 class="font-semibold text-text dark:text-text-dark" data-i18n="post.toc">目录</h3> <button id="toc-mobile-close" class="text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark"> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M18 6L6 18M6 6l12 12"></path> </svg> </button> </div> <div class="overflow-y-auto flex-1 min-h-0"> <nav><ul class="space-y-1 border-l border-border dark:border-border-dark"><li><a href="#先分清编译与链接" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">先分清编译与链接</a></li><li><a href="#开发环境准备" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">开发环境准备</a></li><li><a href="#linux" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Linux</a></li><li><a href="#windows优先使用-wsl2" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Windows：优先使用 WSL2</a></li><li><a href="#windows纯原生交叉编译" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Windows：纯原生交叉编译</a></li><li><a href="#glibc-必须匹配目标机" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">glibc 必须匹配目标机</a></li><li><a href="#三个链接配置" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">三个链接配置</a></li><li><a href="#linux-与-wsl-配置" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Linux 与 WSL 配置</a></li><li><a href="#windows-原生配置" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-6">Windows 原生配置</a></li><li><a href="#构建与验证" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">构建与验证</a></li><li><a href="#常见错误速查" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">常见错误速查</a></li><li><a href="#裸机项目的例外" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">裸机项目的例外</a></li><li><a href="#小结" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">小结</a></li><li><a href="#参考资料" class="block py-0.5 text-sm text-muted hover:text-text dark:text-muted-dark dark:hover:text-text-dark pl-3">参考资料</a></li></ul></nav> </div> </div> </div>  <script type="module">const t=document.getElementById("toc-btn-m"),e=document.getElementById("toc-mobile-overlay"),d=document.getElementById("toc-mobile-close");t&&e&&d&&(t.classList.remove("hidden"),t.classList.add("flex"),t.addEventListener("click",()=>e.classList.remove("hidden")),d.addEventListener("click",()=>e.classList.add("hidden")),e.addEventListener("click",c=>{c.target===e&&e.classList.add("hidden")}));</script>
